@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영상 비교 및 웹캠 뷰어 (500px x 500px 고정)</title>
+    <style>
+        /* CSS 스타일 */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow: auto; 
+            min-width: 1000px;
+        }
+
+        .container {
+            display: flex; 
+            width: 1000px; 
+            height: 500px; 
+            margin: 50px auto; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 왼쪽 패널: 업로드한 영상 (500px x 500px 고정) */
+        .left-panel {
+            width: 500px; 
+            height: 500px; 
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; 
+            background-color: #f0f0f0; 
+        }
+
+        /* 오른쪽 패널: 웹캠 피드 (500px x 500px 고정) */
+        .right-panel {
+            width: 500px; 
+            height: 500px; 
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            background-color: #333333; 
+        }
+
+        /* 왼쪽 영상 스타일 */
+        #my-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* 오른쪽 웹캠 화면 스타일 */
+        #webcam-feed {
+            width: 500px; 
+            height: 500px; 
+            background-color: #000; 
+            object-fit: cover;
+            border: none;
+            transform: scaleX(-1); /* 거울 모드 */
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 1.2em;
+            text-align: center;
+            position: absolute;
+            width: 500px; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="left-panel">
+            <video id="my-video" autoplay loop muted playsinline>
+                <source src="base.mp4" type="video/mp4">
+                죄송합니다. 귀하의 브라우저는 비디오 태그를 지원하지 않습니다.
+            </video>
+        </div>
+
+        <div class="right-panel">
+            <div id="loading-message" class="loading-text">
+                웹캠 접근을 요청 중입니다... 허용해 주세요.
+            </div>
+            <video id="webcam-feed" autoplay playsinline style="display: none;"></video>
+        </div>
+    </div>
+
+    <script>
+        const videoElement = document.getElementById('webcam-feed');
+        const loadingMessage = document.getElementById('loading-message');
+        const myVideo = document.getElementById('my-video'); // 왼쪽 영상 요소
+
+        // 1. 브라우저 정책을 우회하기 위한 스크립트 (가장 중요)
+        if (myVideo) {
+            // 'play()'를 시도하고 실패하면 사용자에게 메시지를 줍니다.
+            myVideo.play().catch(error => {
+                console.log("자동 재생이 차단되었습니다. 페이지를 클릭해 주세요.");
+                
+                // 사용자가 페이지를 클릭하면 재생되도록 이벤트 리스너 추가
+                document.addEventListener('click', () => {
+                    myVideo.play().catch(e => console.log("재생 실패:", e));
+                }, { once: true });
+            });
+        }
+
+        // 2. 웹캠 접근 요청 함수
+        async function startWebcam() {
+            try {
+                // 웹캠 접근 권한 요청
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                
+                // 성공 시 비디오 표시
+                loadingMessage.style.display = 'none';
+                videoElement.style.display = 'block';
+                videoElement.srcObject = stream;
+                
+            } catch (err) {
+                // 권한 거부 또는 오류 발생 시 메시지 업데이트
+                console.error("웹캠 접근 권한 거부 또는 오류 발생:", err);
+                loadingMessage.innerText = "웹캠 접근 권한이 거부되었습니다.";
+                loadingMessage.style.color = '#ff6b6b';
+            }
+        }
+
+        // 페이지 로드 시 웹캠 시작
+        window.onload = startWebcam; 
+    </script>
+</body>
+</html>
