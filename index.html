@@ -2,85 +2,56 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>통합 뷰어: 영상, 웹캠, 3D 모델</title>
+    <title>GLB 3D 뷰어 및 영상/웹캠 통합</title>
     <style>
-        /* 기본 설정 */
-        body { 
-            margin: 0; 
-            font-family: Arial, sans-serif;
-            overflow: auto; /* 필요 시 스크롤 허용 */
-            min-width: 1000px; /* 최소 너비 */
-        }
-
-        /* 전체 컨테이너: 상단 (영상/웹캠)과 하단 (3D)을 포함 */
-        .main-container {
+        /* 캔버스가 전체 화면을 차지하도록 설정 */
+        body { margin: 0; overflow: hidden; } 
+        
+        /* 2D 패널 스타일 */
+        .video-container {
+            position: absolute; /* 3D 캔버스 위에 겹치게 배치 */
+            z-index: 10;        /* 캔버스보다 위에 오도록 설정 */
             display: flex;
             flex-direction: column;
-            width: 100%;
-            height: 100vh; /* 화면 높이 전체 사용 */
+            gap: 10px;
         }
 
-        /* --- 1. 상단 섹션: 영상 및 웹캠 (화면 높이의 50% 차지) --- */
-        .top-section {
-            display: flex;
-            width: 1000px; /* 고정 너비 */
-            height: 500px; /* 고정 높이 */
-            margin: 0 auto; /* 중앙 정렬 */
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-            flex-shrink: 0;
+        /* 왼쪽 상단에 배치될 웹캠 패널 */
+        #webcam-panel {
+            top: 0;   /* 위치를 화면 가장자리로 붙임 */
+            left: 0;
         }
 
-        /* 상단 왼쪽 패널: 영상 */
-        .left-panel {
-            width: 500px; 
-            height: 500px; 
-            overflow: hidden; 
-            background-color: #f0f0f0; 
-            flex-shrink: 0;
+        /* 왼쪽 하단에 배치될 영상 패널 */
+        #video-panel {
+            bottom: 0; /* 위치를 화면 가장자리로 붙임 */
+            left: 0;
         }
-        #my-video {
+        
+        .video-box {
+            width: 200px;
+            height: 150px;
+            /* 🌟 배경색을 3D 씬과 동일한 흰색으로 통일 🌟 */
+            background-color: #ffffff; 
+            /* 테두리 및 그림자 제거 */
+            border: none;
+            box-shadow: none;
+            overflow: hidden; /* 비디오가 상자를 벗어나지 않게 처리 */
+        }
+
+        video {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            display: none; /* 초기에는 숨김 */
+            transform: scaleX(-1); /* 웹캠 거울 모드 */
         }
 
-        /* 상단 오른쪽 패널: 웹캠 */
-        .right-panel {
-            position: relative;
-            width: 500px; 
-            height: 500px; 
-            background-color: #333333; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-shrink: 0;
-        }
-        #webcam-feed {
-            width: 500px; 
-            height: 500px; 
-            object-fit: cover;
-            transform: scaleX(-1); /* 거울 모드 */
-            display: none;
-        }
-        .loading-text {
-            color: white;
-            font-size: 1.2em;
+        .message {
+            /* 2D 패널 배경이 흰색이므로 메시지 텍스트 색상을 검은색으로 변경 */
+            color: black; 
             text-align: center;
-        }
-
-        /* --- 2. 하단 섹션: 3D 뷰어 (남은 공간 전체 차지) --- */
-        .bottom-section {
-            flex-grow: 1; /* 남은 공간을 모두 차지 */
-            min-height: 300px; /* 최소 높이 보장 */
-            overflow: hidden;
-            position: relative;
-        }
-        /* Three.js 캔버스가 하단 섹션 안에 들어가도록 설정 */
-        #three-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
+            padding-top: 50px;
         }
     </style>
 </head>
@@ -93,214 +64,24 @@
             }
         }
     </script>
-
-    <div class="main-container">
-        <div class="top-section">
-            <div class="left-panel">
-                <video id="my-video" autoplay loop muted playsinline>
-                    <source src="base.mp4" type="video/mp4">
-                    브라우저는 비디오 태그를 지원하지 않습니다.
-                </video>
-            </div>
-            <div class="right-panel">
-                <div id="loading-message" class="loading-text">
-                    웹캠 접근을 요청 중입니다...
-                </div>
-                <video id="webcam-feed" autoplay playsinline></video>
-            </div>
+    
+    <div id="webcam-panel" class="video-container">
+        <div class="video-box">
+            <video id="webcam-feed" autoplay playsinline muted></video>
+            <div id="webcam-loading" class="message">웹캠 접근 요청 중...</div>
         </div>
-
-        <div class="bottom-section" id="bottom-section">
-            </div>
+    </div>
+    
+    <div id="video-panel" class="video-container">
+        <div class="video-box">
+            <video id="my-video" loop muted playsinline>
+                <source src="base.mp4" type="video/mp4"> 
+                브라우저가 비디오 태그를 지원하지 않습니다.
+            </video>
+            <div id="video-info" class="message">영상 준비 완료 (클릭 시 재생)</div>
+        </div>
     </div>
 
-
-    <script type="module">
-        import * as THREE from 'three';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-        // ==========================================================
-        // 1. 상단 섹션 (영상/웹캠) 로직
-        // ==========================================================
-
-        const videoElement = document.getElementById('webcam-feed');
-        const loadingMessage = document.getElementById('loading-message');
-        const myVideo = document.getElementById('my-video');
-
-        // A. 왼쪽 영상 재생 시도
-        if (myVideo) {
-            myVideo.play().catch(error => {
-                console.log("자동 재생이 차단되었습니다. 페이지를 클릭해 주세요.");
-                document.addEventListener('click', () => {
-                    myVideo.play().catch(e => console.log("재생 실패:", e));
-                }, { once: true });
-            });
-        }
-
-        // B. 오른쪽 웹캠 시작
-        async function startWebcam() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                loadingMessage.style.display = 'none';
-                videoElement.style.display = 'block';
-                videoElement.srcObject = stream;
-            } catch (err) {
-                console.error("웹캠 접근 권한 거부 또는 오류 발생:", err);
-                loadingMessage.innerText = "웹캠 접근 권한이 거부되었습니다.";
-                loadingMessage.style.color = '#ff6b6b';
-            }
-        }
-        window.onload = startWebcam;
-
-
-        // ==========================================================
-        // 2. 하단 섹션 (3D 모델) 로직
-        // ==========================================================
-
-        let intersectedObject = null; 
-        let isDragging = false;       
-        let previousMousePosition = { x: 0, y: 0 }; 
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        
-        // 🌟 모델 설정
-        const modelsToLoad = [
-            { name: 'shoes.glb', scale: 10 }, 
-            { name: 'bag.glb', scale: 7 },
-            { name: 'ball.glb', scale: 5 },
-            { name: 'book.glb', scale: 10 }, 
-            { name: 'close.glb', scale: 5 },
-            { name: 'glasses.glb', scale: 20 }, 
-            { name: 'guard.glb', scale: 10 },
-            { name: 'persimmon.glb', scale: 20 },
-        ];
-        const FIXED_POSITION_Y = -4.0;
-        const FIXED_POSITION_Z = 0.0;
-        const MODEL_SPACING_X = 3.0;
-
-        // --- 3D 기본 요소 설정 ---
-        const bottomSection = document.getElementById('bottom-section');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xdddddd); // 3D 배경색: 밝은 회색
-
-        // 캔버스를 담는 하단 섹션의 크기를 기준으로 카메라 설정
-        const camera = new THREE.PerspectiveCamera(
-            50, 
-            bottomSection.clientWidth / bottomSection.clientHeight, 
-            0.1, 
-            1000
-        );
-        camera.position.set(0, 0, 15); 
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(bottomSection.clientWidth, bottomSection.clientHeight);
-        bottomSection.appendChild(renderer.domElement); 
-
-
-        // --- 조명 설정 ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-        scene.add(ambientLight);
-
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        directionalLight.position.set(5, 10, 7).normalize();
-        scene.add(directionalLight);
-
-        // --- 컨트롤 설정 ---
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.target.set(0, FIXED_POSITION_Y, 0); 
-        controls.enablePan = false;     
-        controls.enableRotate = false;  
-        controls.maxDistance = 20;      
-        controls.minDistance = 5;       
-
-
-        // --- GLB 모델 로드 ---
-        const loader = new GLTFLoader(); 
-        const modelCount = modelsToLoad.length;
-        const startX = -((modelCount - 1) * MODEL_SPACING_X) / 2; 
-
-        modelsToLoad.forEach((modelInfo, index) => {
-            loader.load(
-                modelInfo.name,
-                function (gltf) {
-                    const model = gltf.scene;
-                    model.position.x = startX + (index * MODEL_SPACING_X); 
-                    model.position.y = FIXED_POSITION_Y; 
-                    model.position.z = FIXED_POSITION_Z; 
-                    model.scale.set(modelInfo.scale, modelInfo.scale, modelInfo.scale);
-                    scene.add(model);
-                },
-                undefined, 
-                function (error) {
-                    console.error(`모델 로드 에러: ${modelInfo.name}`, error);
-                }
-            );
-        });
-
-
-        // --- 마우스 이벤트 (개별 회전) ---
-        renderer.domElement.addEventListener('mousedown', onMouseDown, false);
-        renderer.domElement.addEventListener('mousemove', onMouseMove, false);
-        renderer.domElement.addEventListener('mouseup', onMouseUp, false);
-
-        function onMouseDown(event) {
-            const rect = renderer.domElement.getBoundingClientRect();
-            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(scene.children, true); 
-
-            if (intersects.length > 0) {
-                let target = intersects[0].object;
-                while (target.parent && target.parent !== scene) {
-                    target = target.parent;
-                }
-                if (target.parent === scene) {
-                    intersectedObject = target;
-                    isDragging = true;
-                    previousMousePosition.x = event.clientX;
-                    previousMousePosition.y = event.clientY;
-                    controls.enabled = false; 
-                }
-            }
-        }
-
-        function onMouseMove(event) {
-            if (!isDragging || !intersectedObject) return;
-            const deltaX = event.clientX - previousMousePosition.x;
-            intersectedObject.rotation.y += deltaX * 0.01; 
-            previousMousePosition.x = event.clientX;
-        }
-
-        function onMouseUp(event) {
-            isDragging = false;
-            intersectedObject = null;
-            controls.enabled = true; 
-        }
-
-
-        // --- 렌더링 루프 및 창 크기 변경 처리 ---
-        function animate() {
-            requestAnimationFrame(animate); 
-            controls.update(); 
-            renderer.render(scene, camera); 
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            // 하단 섹션의 새 크기를 가져옵니다.
-            const newWidth = bottomSection.clientWidth;
-            const newHeight = bottomSection.clientHeight;
-
-            // 3D 뷰어 크기 조정
-            camera.aspect = newWidth / newHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(newWidth, newHeight);
-        });
-
-    </script>
+    <script type="module" src="./main.js"></script>
 </body>
 </html>
