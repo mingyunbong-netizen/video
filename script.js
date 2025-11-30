@@ -35,7 +35,7 @@ const MODEL_SPACING_X = 3.0;    // ⬅️ X축 모델 간의 간격입니다.
 
 // 1. 기본 3요소 설정
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xffffff); // 배경색: 순수 흰색
+scene.background = new THREE.Color(0xffffff); // ⬅️ 배경색: 순수 흰색 (HTML CSS와 통일!)
 
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
 // Y축 -4.0 위치를 중심으로 볼 수 있도록 카메라 위치 조정
@@ -46,12 +46,10 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement); 
 
 // 2. 조명 설정
-// 💡 AmbientLight 강도를 1.2로 높여 전반적인 밝기 개선
-const ambientLight = new THREE.AmbientLight(0xffffff, **1.2**); 
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
 scene.add(ambientLight);
 
-// 💡 DirectionalLight 강도를 2.0으로 높여 주광의 밝기 강화
-const directionalLight = new THREE.DirectionalLight(0xffffff, **2.0**);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
 directionalLight.position.set(5, 10, 7).normalize();
 scene.add(directionalLight);
 
