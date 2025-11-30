@@ -104,7 +104,7 @@
         <div class="comparison-container">
             <div class="left-panel">
                 <video id="my-video" autoplay loop muted playsinline>
-                    <source id="video-source" src="base.mp4" type="video/mp4">
+                    <source src="base.mp4" type="video/mp4">
                     죄송합니다. 귀하의 브라우저는 비디오 태그를 지원하지 않습니다.
                 </video>
             </div>
@@ -119,28 +119,34 @@
     </div>
 
     <div id="threejs-container">
-    </div>
+        </div>
 
-        <script type="module">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
         // ----------------------------------------------------
         // A. 웹캠/영상 비교 섹션 JavaScript
         // ----------------------------------------------------
         const videoElement = document.getElementById('webcam-feed');
         const loadingMessage = document.getElementById('loading-message');
         const myVideo = document.getElementById('my-video'); // 왼쪽 영상 요소
-        const videoSource = document.getElementById('video-source'); // 왼쪽 영상 소스 요소
-        const BASE_VIDEO_SRC = "base.mp4"; // 기본 영상 파일명
 
-        // 1. 브라우저 정책을 우회하기 위한 스크립트 (클릭 시 재생 시도)
-        function tryPlayVideo() {
-            myVideo.play().catch(e => {
+        // 1. 브라우저 정책을 우회하기 위한 스크립트
+        if (myVideo) {
+            myVideo.play().catch(error => {
                 console.log("자동 재생이 차단되었습니다. 페이지를 클릭해 주세요.");
+                document.addEventListener('click', () => {
+                    myVideo.play().catch(e => console.log("재생 실패:", e));
+                }, { once: true });
             });
         }
-
-        document.addEventListener('click', tryPlayVideo, { once: true });
-        tryPlayVideo();
-
 
         // 2. 웹캠 접근 요청 함수
         async function startWebcam() {
@@ -160,54 +166,24 @@
         window.onload = startWebcam;
 
 
-        // 3. 영상 교체 및 복원 함수
-        let videoResetTimer = null;
-
-        function switchVideo(modelName) {
-            const newSrc = modelName.replace('.glb', '.mp4');
-           
-            console.log(`영상을 ${newSrc}로 교체합니다.`);
-           
-            // 기존 타이머 취소
-            if (videoResetTimer) {
-                clearTimeout(videoResetTimer);
-            }
-
-            // 새로운 영상으로 변경
-            videoSource.src = newSrc;
-            myVideo.load();
-            myVideo.loop = false; // 새 영상은 한 번만 재생
-            myVideo.play();
-
-            // 5초 후 기본 영상으로 복원
-            videoResetTimer = setTimeout(() => {
-                console.log(`5초 경과, 기본 영상 ${BASE_VIDEO_SRC}로 복원합니다.`);
-                videoSource.src = BASE_VIDEO_SRC;
-                myVideo.load();
-                myVideo.loop = true; // 기본 영상은 루프
-                myVideo.play();
-                videoResetTimer = null;
-            }, 5000);
-        }
-
-
         // ----------------------------------------------------
         // B. 3D 모델 뷰어 섹션 JavaScript (Three.js)
         // ----------------------------------------------------
-        // CDN URL을 직접 사용하여 모듈 로드 오류를 해결합니다.
-        import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
-        import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-        import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
         const threeJsContainer = document.getElementById('threejs-container');
 
         // --- 전역 변수 및 설정 ---
-        let rotatingObject = null; // 마우스 호버 시 회전할 객체
-        let INTERSECTED = null; // 현재 마우스가 올라가 있는 객체
+        let intersectedObject = null;
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
-        // 🌟🌟🌟 모델 크기 및 배치 설정 🌟🌟🌟
+
+        // 🌟🌟🌟 모델 크기 및 배치 설정 (이곳만 수정하세요!) 🌟🌟🌟
         const modelsToLoad = [
             { name: 'shoes.glb', scale: 10 },
             { name: 'bag.glb', scale: 7 },
@@ -222,13 +198,12 @@
         const FIXED_POSITION_Y = -4.0; 
         const FIXED_POSITION_Z = 0.0;
         const MODEL_SPACING_X = 3.0;
-        const HOVER_SCALE_FACTOR = 1.1; // 확대 비율
         // 🌟🌟🌟 ------------------------------------ 🌟🌟🌟
 
 
         // 1. 기본 3요소 설정
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xffffff); // 배경색: 흰색
+        scene.background = new THREE.Color(0xffffff); // 배경색: 연한 회색으로 변경 (3D 섹션 구분을 위해)
 
         const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
         camera.position.set(0, 0, 15);
@@ -248,13 +223,14 @@
         // 3. 컨트롤 설정
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.target.set(0, FIXED_POSITION_Y, 0);
+        controls.target.set(0, FIXED_POSITION_Y, 0); // 카메라 타겟을 모델 중심으로 설정
         controls.enablePan = false;
-        controls.enableRotate = true; 
+        controls.enableRotate = false; // 마우스 드래그를 모델 개별 회전에 사용하기 위해 궤도 회전은 비활성화
         controls.maxDistance = 20;
         controls.minDistance = 5;
 
-        // 4. GLB 파일 로드 및 초기 설정
+
+        // 4. GLB 파일 로드!
         const loader = new GLTFLoader();
         const modelCount = modelsToLoad.length;
         const startX = -((modelCount - 1) * MODEL_SPACING_X) / 2;
@@ -265,14 +241,16 @@
                 function (gltf) {
                     const model = gltf.scene;
 
+                    // X축 일렬 위치 계산
                     model.position.x = startX + (index * MODEL_SPACING_X);
+                    // Y축 (높이) = -4.0 고정
                     model.position.y = FIXED_POSITION_Y;
+                    // Z축 (깊이) = 0.0 고정
                     model.position.z = FIXED_POSITION_Z;
+
+                    // 모델 크기 및 userData 설정
                     model.scale.set(modelInfo.scale, modelInfo.scale, modelInfo.scale);
-                    
-                    // 모델의 초기 상태 및 정보를 userData에 저장
                     model.userData.modelName = modelInfo.name;
-                    model.userData.baseScale = modelInfo.scale; // 원래 스케일 저장
 
                     scene.add(model);
                 },
@@ -283,9 +261,14 @@
             );
         });
 
-        // 5. 마우스 상호작용 함수
 
-        function getIntersectedModel(event) {
+        // 5. 마우스 이벤트 리스너 추가 (개별 회전을 위한 핵심 로직)
+        renderer.domElement.addEventListener('mousedown', onMouseDown, false);
+        renderer.domElement.addEventListener('mousemove', onMouseMove, false);
+        renderer.domElement.addEventListener('mouseup', onMouseUp, false);
+
+        function onMouseDown(event) {
+            // 마우스 좌표를 Three.js 정규화 좌표로 변환
             const rect = renderer.domElement.getBoundingClientRect();
             mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
             mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -298,76 +281,38 @@
                 while (target.parent && target.parent !== scene) {
                     target = target.parent;
                 }
+
                 if (target.parent === scene) {
-                    return target;
+                    intersectedObject = target;
+                    isDragging = true;
+                    previousMousePosition.x = event.clientX;
+                    previousMousePosition.y = event.clientY;
                 }
             }
-            return null;
         }
 
-        renderer.domElement.addEventListener('mousemove', onDocumentMouseMove, false);
-        renderer.domElement.addEventListener('click', onDocumentClick, false);
+        function onMouseMove(event) {
+            if (!isDragging || !intersectedObject) return;
 
+            const deltaX = event.clientX - previousMousePosition.x;
 
-        function onDocumentMouseMove(event) {
-            const intersects = getIntersectedModel(event);
+            // Y축 회전 적용
+            intersectedObject.rotation.y += deltaX * 0.01;
 
-            if (intersects) {
-                if (INTERSECTED !== intersects) {
-                    // 이전 객체가 있었으면 복원
-                    if (INTERSECTED) {
-                        INTERSECTED.scale.set(
-                            INTERSECTED.userData.baseScale,
-                            INTERSECTED.userData.baseScale,
-                            INTERSECTED.userData.baseScale
-                        );
-                    }
-                    
-                    // 새 객체 설정 및 확대
-                    INTERSECTED = intersects;
-                    INTERSECTED.scale.set(
-                        INTERSECTED.userData.baseScale * HOVER_SCALE_FACTOR,
-                        INTERSECTED.userData.baseScale * HOVER_SCALE_FACTOR,
-                        INTERSECTED.userData.baseScale * HOVER_SCALE_FACTOR
-                    );
-                    rotatingObject = INTERSECTED; // 회전할 객체 지정
-                }
-                
-            } else {
-                // 호버 해제
-                if (INTERSECTED) {
-                    // 크기 복원
-                    INTERSECTED.scale.set(
-                        INTERSECTED.userData.baseScale,
-                        INTERSECTED.userData.baseScale,
-                        INTERSECTED.userData.baseScale
-                    );
-                }
-                INTERSECTED = null;
-                rotatingObject = null; // 회전 중지
-            }
+            previousMousePosition.x = event.clientX;
+            previousMousePosition.y = event.clientY;
         }
-        
-        function onDocumentClick(event) {
-            const clickedModel = getIntersectedModel(event);
 
-            if (clickedModel && clickedModel.userData.modelName) {
-                switchVideo(clickedModel.userData.modelName); // 영상 교체 함수 호출
-            }
+        function onMouseUp(event) {
+            isDragging = false;
+            intersectedObject = null;
         }
 
 
         // 6. 렌더링 루프 (애니메이션)
         function animate() {
             requestAnimationFrame(animate);
-            
             controls.update();
-            
-            // 호버된 객체만 Y축 회전
-            if (rotatingObject) {
-                rotatingObject.rotation.y += 0.01;
-            }
-
             renderer.render(scene, camera);
         }
 
@@ -383,3 +328,5 @@
     </script>
 </body>
 </html>
+
+지금 보면 화면이 두개로 나누어져 있고 3d 모델칸의 배경을 흰색으로 깔아줄수 있어?
