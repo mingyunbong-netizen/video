@@ -181,20 +181,19 @@
         let intersectedObject = null;
         let originalScale = new THREE.Vector3(); // 원래 스케일 저장
         let rotationSpeed = 0.005; // 자동 회전 속도
-        let autoRotateTween = null; // 자동 회전 트윈 애니메이션
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
-        // 🌟🌟🌟 모델 크기 및 배치 설정 (이곳만 수정하세요!) 🌟🌟🌟
+        // 🌟🌟🌟 모델 크기 및 배치 설정 (요청에 따라 비디오 경로 업데이트 완료) 🌟🌟🌟
         const modelsToLoad = [
-            { name: 'shoes.glb', scale: 10, video: 'shoes_video.mp4' }, // 예시: shoes_video.mp4 추가
-            { name: 'bag.glb', scale: 7, video: 'bag_video.mp4' },
-            { name: 'ball.glb', scale: 5, video: 'ball_video.mp4' },
-            { name: 'book.glb', scale: 10, video: 'book_video.mp4' },
-            { name: 'close.glb', scale: 5, video: 'close_video.mp4' },
-            { name: 'glasses.glb', scale: 20, video: 'glasses_video.mp4' },
-            { name: 'guard.glb', scale: 10, video: 'guard_video.mp4' },
-            { name: 'persimmon.glb', scale: 20, video: 'persimmon_video.mp4' },
+            { name: 'shoes.glb', scale: 10, video: 'shoes.mp4' },       
+            { name: 'bag.glb', scale: 7, video: 'bag.mp4' },
+            { name: 'ball.glb', scale: 5, video: 'Stretching.mp4' },
+            { name: 'book.glb', scale: 10, video: 'book.mp4' },
+            { name: 'close.glb', scale: 5, video: 'clothes.mp4' },
+            { name: 'glasses.glb', scale: 20, video: 'glasses.mp4' },
+            { name: 'guard.glb', scale: 10, video: 'brace.mp4' },       
+            { name: 'persimmon.glb', scale: 20, video: 'food.mp4' },    
         ];
 
         const FIXED_POSITION_Y = -4.0; 
@@ -230,7 +229,7 @@
         controls.enableDamping = true;
         controls.target.set(0, FIXED_POSITION_Y, 0); // 카메라 타겟을 모델 중심으로 설정
         controls.enablePan = false;
-        controls.enableRotate = true; // 궤도 회전 활성화 (마우스 오버 시 모델 개별 회전은 별도 처리)
+        controls.enableRotate = true; // 궤도 회전 활성화 
         controls.maxDistance = 20;
         controls.minDistance = 5;
 
