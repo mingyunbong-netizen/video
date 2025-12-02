@@ -5,33 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>영상 비교 및 3D 모델 뷰어</title>
     <style>
-        /* 기본 설정 */
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            overflow-x: hidden; /* 가로 스크롤 방지 */
+            overflow-x: hidden;
         }
 
-        /* ----------------------------------- */
-        /* 상단: 영상 비교 섹션 스타일 */
-        /* ----------------------------------- */
         .top-comparison-section {
             width: 100%;
             display: flex;
-            justify-content: center; /* 뷰어 중앙 정렬 */
+            justify-content: center;
             padding: 30px 0;
             box-sizing: border-box;
-            background-color: #f7f7f7; /* 섹션 배경색 */
+            background-color: #f7f7f7;
         }
 
         .comparison-container {
             display: flex;
-            width: 1000px; /* 고정 크기 유지 */
+            width: 1000px;
             height: 500px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
-        /* 왼쪽 패널: 업로드한 영상 (500px x 500px 고정) */
         .left-panel {
             width: 500px;
             height: 500px;
@@ -42,18 +37,14 @@
             overflow: hidden;
             background-color: #f0f0f0;
             position: relative; 
-            transition: transform 0.2s ease-in-out; /* 반응 애니메이션 (그림자/테두리 전환 효과 제거) */
-            /* 기존의 기본 테두리 관련 설정 제거 */
+            transition: transform 0.2s ease-in-out;
         }
 
-        /* 🌟🌟🌟 base.mp4 마우스 오버 시 반응 (크기 확대만 남김) 🌟🌟🌟 */
         .left-panel:hover {
-            transform: scale(1.02); /* 살짝 확대 */
-            cursor: pointer; /* 클릭 가능한 커서 */
-            /* border 및 box-shadow 속성 제거 */
+            transform: scale(1.02);
+            cursor: pointer;
         }
 
-        /* 오른쪽 패널: 웹캠 피드 (500px x 500px 고정) */
         .right-panel {
             width: 500px;
             height: 500px;
@@ -66,21 +57,19 @@
             background-color: #333333;
         }
 
-        /* 영상 스타일 */
         #my-video {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        /* 웹캠 화면 스타일 */
         #webcam-feed {
             width: 500px;
             height: 500px;
             background-color: #000;
             object-fit: cover;
             border: none;
-            transform: scaleX(-1); /* 거울 모드 */
+            transform: scaleX(-1);
         }
 
         .loading-text {
@@ -91,21 +80,15 @@
             width: 500px;
         }
 
-        /* ----------------------------------- */
-        /* 하단: 3D 뷰어 섹션 스타일 */
-        /* ----------------------------------- */
-
         #threejs-container {
             width: 100vw;
-            /* 3D 뷰어의 높이. 필요에 따라 조절하세요. */
             height: 70vh; 
             overflow: hidden;
-            cursor: grab; /* 드래그 가능한 커서 */
+            cursor: grab;
         }
 
-        /* Three.js 캔버스가 이 컨테이너 안에 위치합니다. */
         #threejs-container canvas {
-            display: block; /* 캔버스 아래 공백 제거 */
+            display: block;
         }
     </style>
 </head>
@@ -142,21 +125,17 @@
     </script>
 
     <script type="module">
-        // ----------------------------------------------------
-        // A. 웹캠/영상 비교 섹션 JavaScript
-        // ----------------------------------------------------
         const videoElement = document.getElementById('webcam-feed');
         const loadingMessage = document.getElementById('loading-message');
-        const myVideo = document.getElementById('my-video'); // 왼쪽 영상 요소
-        const videoSource = document.getElementById('video-source'); // 비디오 소스 요소
-        const leftVideoPanel = document.getElementById('left-video-panel'); // 왼쪽 패널 요소
-        const BASE_VIDEO_PATH = "base.mp4"; // 기본 비디오 경로 (Three.js 섹션과 공유)
+        const myVideo = document.getElementById('my-video');
+        const videoSource = document.getElementById('video-source');
+        const leftVideoPanel = document.getElementById('left-video-panel');
+        const BASE_VIDEO_PATH = "base.mp4";
 
 
-        // 1. 기본 비디오 설정 (음소거 및 반복)
         if (myVideo) {
-            myVideo.loop = true; // 기본 영상은 반복
-            myVideo.muted = true; // 기본 영상은 음소거 (자동 재생 보장)
+            myVideo.loop = true;
+            myVideo.muted = true;
             myVideo.play().catch(error => {
                 console.log("자동 재생이 차단되었습니다. 페이지를 클릭해 주세요.");
                 document.addEventListener('click', () => {
@@ -165,54 +144,43 @@
             });
         }
         
-        // 2. 비디오 종료 시 base.mp4로 돌아가는 리스너 추가 
         myVideo.addEventListener('ended', () => {
-            // 현재 재생 중인 비디오가 base.mp4가 아닐 경우에만 기본으로 복귀
             const currentVideoName = myVideo.currentSrc.substring(myVideo.currentSrc.lastIndexOf('/') + 1);
             if (currentVideoName !== BASE_VIDEO_PATH) {
                 switchToBaseVideo();
             }
         });
 
-        // 기본 비디오로 복귀하는 함수
         function switchToBaseVideo() {
-            // 소스를 base.mp4로 변경
             videoSource.src = BASE_VIDEO_PATH;
             myVideo.load();
             
-            // 기본 영상은 다시 반복 및 음소거 설정
             myVideo.loop = true;
             myVideo.muted = true; 
             myVideo.play().catch(e => console.error("기본 비디오 재생 실패:", e));
         }
 
-        // 3. base.mp4 클릭 이벤트 리스너 추가
         leftVideoPanel.addEventListener('click', () => {
-            // 현재 base.mp4가 재생 중일 때만 hi.mp4로 전환
             const currentVideoName = myVideo.currentSrc.substring(myVideo.currentSrc.lastIndexOf('/') + 1);
             if (currentVideoName === BASE_VIDEO_PATH) {
                 playSpecificVideo('hi.mp4');
             }
         });
 
-        // 특정 비디오를 재생하는 함수 (모델 클릭 및 base.mp4 클릭 시 공통 사용)
         function playSpecificVideo(videoPath) {
-            myVideo.loop = false; // 일회성 재생
-            myVideo.muted = false; // 소리 재생 시도
+            myVideo.loop = false;
+            myVideo.muted = false;
 
             videoSource.src = videoPath;
             myVideo.load();
 
             myVideo.play().catch(e => {
                 console.error(`비디오 재생 실패 (${videoPath}):`, e);
-                // 혹시 모를 대비: 음소거로라도 재생 시도
                 myVideo.muted = true;
                 myVideo.play().catch(e2 => console.error("음소거 재생도 실패:", e2));
             });
         }
 
-
-        // 4. 웹캠 접근 요청 함수
         async function startWebcam() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -226,47 +194,37 @@
             }
         }
 
-        // 페이지 로드 시 웹캠 시작
         window.onload = startWebcam;
 
 
-        // ----------------------------------------------------
-        // B. 3D 모델 뷰어 섹션 JavaScript (Three.js)
-        // ----------------------------------------------------
         import * as THREE from 'three';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
         const threeJsContainer = document.getElementById('threejs-container');
 
-        // --- 전역 변수 및 설정 ---
         let intersectedObject = null;
         let originalScale = new THREE.Vector3(); 
         let rotationSpeed = 0.005; 
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
-        // 🌟🌟🌟 모델 크기 및 배치 설정 🌟🌟🌟
         const modelsToLoad = [
-            { name: 'shoes.glb', scale: 10, video: 'shoes.mp4' },       
+            { name: 'shoes.glb', scale: 10, video: 'shoes.mp4' },      
             { name: 'bag.glb', scale: 7, video: 'bag.mp4' },
             { name: 'ball.glb', scale: 5, video: 'Stretching.mp4' },
             { name: 'book.glb', scale: 10, video: 'book.mp4' },
             { name: 'close.glb', scale: 5, video: 'clothes.mp4' },
             { name: 'glasses.glb', scale: 20, video: 'glasses.mp4' },
-            { name: 'guard.glb', scale: 10, video: 'brace.mp4' },       
-            { name: 'persimmon.glb', scale: 20, video: 'food.mp4' },    
+            { name: 'guard.glb', scale: 10, video: 'brace.mp4' },      
+            { name: 'persimmon.glb', scale: 20, video: 'food.mp4' },   
         ];
 
         const FIXED_POSITION_Y = -4.0; 
         const FIXED_POSITION_Z = 0.0;
         const MODEL_SPACING_X = 3.0;
-        const HOVER_SCALE_FACTOR = 1.2; // 마우스 오버 시 확대 비율
-        // const BASE_VIDEO_PATH = "base.mp4"; // A 섹션에서 정의됨
-        // 🌟🌟🌟 ------------------------------------ 🌟🌟🌟
+        const HOVER_SCALE_FACTOR = 1.2;
 
-
-        // 1. 기본 3요소 설정
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xffffff); 
 
@@ -277,7 +235,6 @@
         renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
         threeJsContainer.appendChild(renderer.domElement); 
 
-        // 2. 조명 설정
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(ambientLight);
 
@@ -285,7 +242,6 @@
         directionalLight.position.set(5, 10, 7).normalize();
         scene.add(directionalLight);
 
-        // 3. 컨트롤 설정
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.target.set(0, FIXED_POSITION_Y, 0); 
@@ -294,8 +250,6 @@
         controls.maxDistance = 20;
         controls.minDistance = 5;
 
-
-        // 4. GLB 파일 로드
         const loader = new GLTFLoader();
         const modelCount = modelsToLoad.length;
         const startX = -((modelCount - 1) * MODEL_SPACING_X) / 2;
@@ -306,12 +260,10 @@
                 function (gltf) {
                     const model = gltf.scene;
 
-                    // 위치 설정
                     model.position.x = startX + (index * MODEL_SPACING_X);
                     model.position.y = FIXED_POSITION_Y;
                     model.position.z = FIXED_POSITION_Z;
 
-                    // 모델 크기 및 userData 설정
                     model.scale.set(modelInfo.scale, modelInfo.scale, modelInfo.scale);
                     model.userData.modelName = modelInfo.name;
                     model.userData.modelVideo = modelInfo.video; 
@@ -326,17 +278,14 @@
             );
         });
 
-
-        // 5. 마우스 이벤트 리스너 추가 
         renderer.domElement.addEventListener('mousemove', onThreeJsMouseMove, false);
         renderer.domElement.addEventListener('click', onThreeJsClick, false);
         renderer.domElement.addEventListener('mouseleave', onThreeJsMouseLeave, false);
 
 
-        let currentIntersected = null; // 현재 마우스 오버된 모델
+        let currentIntersected = null;
 
         function onThreeJsMouseMove(event) {
-            // 마우스 좌표를 Three.js 정규화 좌표로 변환
             const rect = renderer.domElement.getBoundingClientRect();
             mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
             mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -351,29 +300,24 @@
                 }
 
                 if (target.parent === scene && target !== currentIntersected) {
-                    // 이전에 오버된 모델이 있다면 원래 상태로 되돌리기
                     if (currentIntersected) {
                         currentIntersected.scale.copy(currentIntersected.userData.originalScale);
-                        // 자동 회전 멈추기
                         if (currentIntersected.userData.autoRotateInterval) {
                             clearInterval(currentIntersected.userData.autoRotateInterval);
                             currentIntersected.userData.autoRotateInterval = null;
                         }
                     }
 
-                    // 새롭게 오버된 모델 설정 및 확대
                     currentIntersected = target;
                     currentIntersected.scale.multiplyScalar(HOVER_SCALE_FACTOR);
 
-                    // 자동 회전 시작
                     if (!currentIntersected.userData.autoRotateInterval) {
                         currentIntersected.userData.autoRotateInterval = setInterval(() => {
                             currentIntersected.rotation.y += rotationSpeed * 5; 
-                        }, 1000 / 60); // 60fps
+                        }, 1000 / 60);
                     }
                 }
             } else {
-                // 아무것도 intersect 되지 않았을 때
                 if (currentIntersected) {
                     currentIntersected.scale.copy(currentIntersected.userData.originalScale);
                     if (currentIntersected.userData.autoRotateInterval) {
@@ -386,7 +330,6 @@
         }
 
         function onThreeJsMouseLeave() {
-            // 컨테이너에서 마우스가 벗어났을 때
             if (currentIntersected) {
                 currentIntersected.scale.copy(currentIntersected.userData.originalScale);
                 if (currentIntersected.userData.autoRotateInterval) {
@@ -404,7 +347,6 @@
         }
 
 
-        // 6. 렌더링 루프 (애니메이션)
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
@@ -413,9 +355,7 @@
 
         animate();
 
-        // 7. 창 크기 변경 시 화면 비율 유지 
         window.addEventListener('resize', () => {
-            // 3D 뷰어 리사이징
             camera.aspect = threeJsContainer.clientWidth / threeJsContainer.clientHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
