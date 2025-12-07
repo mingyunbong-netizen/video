@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>영상 비교 및 3D 모델 뷰어 (음성 인식 기능 포함)</title>
+    <title>영상 비교 및 3D 모델 뷰어 (음성 인식 기록 박스)</title>
     <style>
         body {
             margin: 0;
@@ -14,9 +14,9 @@
         .top-comparison-section {
             width: 100%;
             display: flex;
-            flex-direction: column; /* 상태 메시지를 위에 배치하기 위해 변경 */
+            flex-direction: column;
             align-items: center;
-            padding: 30px 0 10px 0; /* 상단 여백 조정 */
+            padding: 30px 0 10px 0;
             box-sizing: border-box;
             background-color: #f7f7f7;
         }
@@ -28,7 +28,7 @@
             text-align: center;
             font-weight: bold;
             color: #1a1a1a;
-            background-color: #e0f7fa; /* 밝은 배경 */
+            background-color: #e0f7fa;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
@@ -68,6 +68,7 @@
             align-items: center;
             box-sizing: border-box;
             background-color: #333333;
+            position: relative; /* 오버레이 배치를 위해 필수 */
         }
 
         #my-video {
@@ -93,19 +94,36 @@
             width: 500px;
         }
         
-        /* 웹캠 영역에 음성 인식 상태 표시를 위한 스타일 */
-        .speech-status-overlay {
+        /* 음성 인식 기록을 표시할 메시지 박스 스타일 */
+        #speech-command-overlay {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
+            top: 10px; /* 오른쪽 패널 상단에서 10px 아래 */
+            right: 10px; /* 오른쪽 패널 우측에서 10px 안쪽 */
+            width: 250px; /* 박스 폭 고정 */
+            height: 480px; /* 박스 높이 고정 */
             padding: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            color: yellow;
-            font-size: 1em;
-            text-align: center;
+            background: rgba(0, 0, 0, 0.65); /* 반투명 배경 */
+            color: white;
+            font-size: 0.9em;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             box-sizing: border-box;
-            display: none; /* 초기에는 숨김 */
+            overflow-y: auto; /* 내용이 넘치면 스크롤 가능 */
+            text-align: left;
+            white-space: pre-wrap;
+            z-index: 10;
+            display: none;
+            /* 스크롤바 숨기기 (선택 사항) */
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        #speech-command-overlay::-webkit-scrollbar {
+            display: none;
+        }
+        /* 현재 말하는 중인 텍스트 스타일 */
+        #interim-text {
+            color: #FFFF00; /* 노란색으로 강조 */
+            font-style: italic;
         }
 
 
@@ -140,7 +158,7 @@
                 </div>
                 <video id="webcam-feed" autoplay playsinline style="display: none;"></video>
                 
-                <div id="speech-command-overlay" class="speech-status-overlay"></div>
+                <div id="speech-command-overlay"></div>
             </div>
         </div>
     </div>
@@ -159,7 +177,7 @@
 
     <script type="module">
         // =================================================================
-        // 1. DOM 및 비디오 제어 로직 (기존 코드 유지)
+        // 1. DOM 및 비디오 제어 로직
         // =================================================================
         const videoElement = document.getElementById('webcam-feed');
         const loadingMessage = document.getElementById('loading-message');
@@ -221,7 +239,7 @@
         }
         
         // =================================================================
-        // 2. 음성 인식 및 통합 로직 (추가된 기능)
+        // 2. 음성 인식 및 통합 로직 (누적 기록 개선)
         // =================================================================
 
         window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -229,8 +247,11 @@
         const speechRecognition = window.SpeechRecognition ? new SpeechRecognition() : null;
         let isListening = false;
         let isMediaReady = false;
-        let modelKeywordMap = {}; // 모델 이름/비디오 경로를 저장할 맵
+        let modelKeywordMap = {};
         
+        // 누적된 음성 기록을 저장하는 변수
+        let accumulatedTranscript = '--- 음성 인식 기록 시작 ---\n'; 
+
         // 모델 정보 정의
         const modelsToLoad = [
             { name: 'shoes.glb', scale: 10, video: 'shoes.mp4' },
@@ -261,7 +282,7 @@
                 modelKeywordMap[keyword] = model.video;
             }
         });
-        modelKeywordMap['기본'] = BASE_VIDEO_PATH; // 기본 비디오로 돌아가는 명령 추가
+        modelKeywordMap['기본'] = BASE_VIDEO_PATH; 
 
 
         function startSpeechRecognition() {
@@ -271,53 +292,83 @@
             }
 
             speechRecognition.continuous = true;
-            speechRecognition.interimResults = false;
+            speechRecognition.interimResults = true; 
             speechRecognition.lang = 'ko-KR';
 
             speechRecognition.onstart = function() {
                 isListening = true;
                 voiceStatusDisplay.innerText = '🟢 음성 인식 활성화됨. "신발", "가방", "기본" 등을 말해보세요.';
                 speechCommandOverlay.style.display = 'block';
-                speechCommandOverlay.innerText = '말씀하세요...';
+                // HTML로 누적 기록 초기 표시
+                speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div><span id="interim-text">...말씀하세요.</span>`; 
             };
 
             speechRecognition.onresult = function(event) {
-                const result = event.results[event.results.length - 1]; 
-                const transcript = result[0].transcript.trim();
-                
-                let matchedVideoPath = null;
-                for (const keyword in modelKeywordMap) {
-                    if (transcript.includes(keyword)) {
-                        matchedVideoPath = modelKeywordMap[keyword];
-                        break;
+                let interimTranscript = ''; // 현재 말하는 중인 임시 텍스트
+                let finalTranscript = ''; // 새로 확정된 최종 텍스트
+                let latestFinalTranscript = ''; // 비디오 명령 처리용
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                        latestFinalTranscript = transcript;
+                    } else {
+                        interimTranscript += transcript;
                     }
                 }
+                
+                // 최종 텍스트를 누적 기록 변수에 추가 (줄바꿈 포함)
+                if (finalTranscript) {
+                    accumulatedTranscript += finalTranscript + '\n';
+                }
 
-                if (matchedVideoPath) {
-                    speechCommandOverlay.style.color = 'lime';
-                    speechCommandOverlay.innerText = `[인식: ${transcript}] -> 영상 재생 중...`;
-                    
-                    if (matchedVideoPath === BASE_VIDEO_PATH) {
-                        switchToBaseVideo();
-                    } else {
-                        playSpecificVideo(matchedVideoPath);
+                // 화면에 '누적된 최종 기록'과 '현재 말하고 있는 임시 텍스트'를 HTML 태그를 사용하여 분리하여 표시
+                speechCommandOverlay.innerHTML = 
+                    `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>` + 
+                    `<span id="interim-text">${interimTranscript}</span>`;
+
+                // 스크롤이 생긴 경우 가장 아래로 이동
+                speechCommandOverlay.scrollTop = speechCommandOverlay.scrollHeight;
+
+                // --- 비디오 명령 처리 로직 ---
+                if (latestFinalTranscript) {
+                    const transcript = latestFinalTranscript.trim();
+                    let matchedVideoPath = null;
+                    for (const keyword in modelKeywordMap) {
+                        if (transcript.includes(keyword)) {
+                            matchedVideoPath = modelKeywordMap[keyword];
+                            break;
+                        }
                     }
-                } else {
-                    speechCommandOverlay.style.color = 'orange';
-                    speechCommandOverlay.innerText = `[인식: ${transcript}] -> 일치하는 명령 없음.`;
+
+                    if (matchedVideoPath) {
+                        voiceStatusDisplay.innerText = `👍 명령 인식: "${transcript}" -> 비디오 재생 중.`;
+                        
+                        if (matchedVideoPath === BASE_VIDEO_PATH) {
+                            switchToBaseVideo();
+                        } else {
+                            playSpecificVideo(matchedVideoPath);
+                        }
+                    } else {
+                        voiceStatusDisplay.innerText = `👂 인식: "${transcript}" -> 일치하는 명령 없음.`;
+                    }
                 }
             };
 
             speechRecognition.onerror = function(event) {
                 voiceStatusDisplay.innerText = `🚨 음성 인식 오류 발생: ${event.error}`;
-                speechCommandOverlay.style.display = 'block';
-                speechCommandOverlay.style.color = '#ff6b6b';
-                speechCommandOverlay.innerText = `오류: ${event.error}`;
+                // 오류 발생 시 누적 기록에 오류 메시지 추가 및 업데이트
+                accumulatedTranscript += `[오류: ${event.error}]\n`;
+                speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`;
+                speechCommandOverlay.scrollTop = speechCommandOverlay.scrollHeight;
                 isListening = false;
             };
 
             speechRecognition.onend = function() {
                 isListening = false;
+                // 인식이 멈출 때, 임시 텍스트를 제거하고 누적 기록만 표시
+                speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`; 
                 if (isMediaReady) { 
                     setTimeout(() => {
                         speechRecognition.start();
@@ -332,10 +383,9 @@
             }
         }
         
-        // 💡 웹캠 시작 함수를 마이크 접근을 포함하도록 수정
+        // 웹캠 시작 함수: 마이크 접근을 포함하도록 유지
         async function startWebcam() {
             try {
-                // video: 웹캠, audio: 마이크 (음성 인식을 위해 필요)
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); 
                 
                 loadingMessage.style.display = 'none';
@@ -356,10 +406,10 @@
             }
         }
 
-        window.onload = startWebcam; // 웹사이트 로드 시 통합 시작 함수 실행
+        window.onload = startWebcam; 
 
         // =================================================================
-        // 3. Three.js 3D 뷰어 로직 (기존 코드 유지)
+        // 3. Three.js 3D 뷰어 로직
         // =================================================================
         import * as THREE from 'three';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -372,8 +422,8 @@
         let rotationSpeed = 0.005;
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
-
-        // modelsToLoad 배열은 2. 음성 인식 섹션 상단에서 정의되어 재사용됨.
+        
+        // modelsToLoad는 위에서 정의됨 (재사용)
 
         const FIXED_POSITION_Y = -4.0;
         const FIXED_POSITION_Z = 0.0;
