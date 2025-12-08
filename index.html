@@ -11,6 +11,26 @@
             overflow-x: hidden;
         }
 
+        /* ------------------------------------------- */
+        /* 추가된 로고 스타일 */
+        /* ------------------------------------------- */
+        #homepage-logo {
+            cursor: pointer;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'BookkGothic', sans-serif;
+            color: black;
+            z-index: 100; /* 다른 요소 위에 표시되도록 최상위로 설정 */
+            transition: font-size 0.3s ease;
+        }
+        #homepage-logo:hover {
+            font-size: 26px;
+        }
+        /* ------------------------------------------- */
+
         .top-comparison-section {
             width: 100%;
             display: flex;
@@ -68,7 +88,7 @@
             align-items: center;
             box-sizing: border-box;
             background-color: #333333;
-            position: relative; /* 오버레이 배치를 위해 필수 */
+            position: relative;
         }
 
         #my-video {
@@ -94,35 +114,33 @@
             width: 500px;
         }
         
-        /* 음성 인식 기록을 표시할 메시지 박스 스타일 */
         #speech-command-overlay {
             position: absolute;
-            top: 10px; /* 오른쪽 패널 상단에서 10px 아래 */
-            right: -300px; /* 오른쪽 패널 우측에서 10px 안쪽 */
-            width: 250px; /* 박스 폭 고정 */
-            height: 480px; /* 박스 높이 고정 */
+            top: 10px; 
+            right: -300px; 
+            width: 250px; 
+            height: 480px; 
             padding: 10px;
-            background: rgba(0, 0, 0, 0.65); /* 반투명 배경 */
+            background: rgba(0, 0, 0, 0.65);
             color: white;
             font-size: 0.9em;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             box-sizing: border-box;
-            overflow-y: auto; /* 내용이 넘치면 스크롤 가능 */
+            overflow-y: auto;
             text-align: left;
             white-space: pre-wrap;
             z-index: 10;
             display: none;
-            /* 스크롤바 숨기기 (선택 사항) */
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
         #speech-command-overlay::-webkit-scrollbar {
             display: none;
         }
-        /* 현재 말하는 중인 텍스트 스타일 */
+        
         #interim-text {
-            color: #FFFF00; /* 노란색으로 강조 */
+            color: #FFFF00; 
             font-style: italic;
         }
 
@@ -140,7 +158,10 @@
     </style>
 </head>
 <body>
-
+    
+    <div id="homepage-logo" onclick="goToHomePage()">
+        서사, 위기속에서
+    </div>
     <div class="top-comparison-section">
         <div id="voice-status-display">마이크 및 웹캠 접근 권한을 허용해 주세요.</div>
 
@@ -176,6 +197,16 @@
     </script>
 
     <script type="module">
+        // =================================================================
+        // 0. 로고 클릭 시 이동 함수 (새로 추가됨)
+        // =================================================================
+        function goToHomePage() {
+            const targetUrl = 'https://mingyunbong-netizen.github.io/home/#';
+            window.location.href = targetUrl;
+        }
+        window.goToHomePage = goToHomePage; // 전역 스코프에 등록하여 onclick에서 호출 가능하게 함
+
+
         // =================================================================
         // 1. DOM 및 비디오 제어 로직
         // =================================================================
@@ -304,9 +335,9 @@
             };
 
             speechRecognition.onresult = function(event) {
-                let interimTranscript = ''; // 현재 말하는 중인 임시 텍스트
-                let finalTranscript = ''; // 새로 확정된 최종 텍스트
-                let latestFinalTranscript = ''; // 비디오 명령 처리용
+                let interimTranscript = '';
+                let finalTranscript = '';
+                let latestFinalTranscript = '';
 
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
