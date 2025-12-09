@@ -328,7 +328,7 @@
 
             speechRecognition.onstart = function() {
                 isListening = true;
-                voiceStatusDisplay.innerText = '🟢 음성 인식 활성화됨. "신발", "가방", "기본" 등을 말해보세요.';
+                voiceStatusDisplay.innerText = ' 대화를 걸어주세요!. "신발", "가방", "안경" 등을 말해보세요.';
                 speechCommandOverlay.style.display = 'block';
                 // HTML로 누적 기록 초기 표시
                 speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div><span id="interim-text">...말씀하세요.</span>`; 
@@ -374,7 +374,7 @@
                     }
 
                     if (matchedVideoPath) {
-                        voiceStatusDisplay.innerText = `👍 명령 인식: "${transcript}" -> 비디오 재생 중.`;
+                        voiceStatusDisplay.innerText = `주제 확인: "${transcript}" -> 대화 재생 중.`;
                         
                         if (matchedVideoPath === BASE_VIDEO_PATH) {
                             switchToBaseVideo();
@@ -382,13 +382,13 @@
                             playSpecificVideo(matchedVideoPath);
                         }
                     } else {
-                        voiceStatusDisplay.innerText = `👂 인식: "${transcript}" -> 일치하는 명령 없음.`;
+                        voiceStatusDisplay.innerText = `주제를 찾지 못했어요: "${transcript}" -> 아래 요소들을 말해주세요.`;
                     }
                 }
             };
 
             speechRecognition.onerror = function(event) {
-                voiceStatusDisplay.innerText = `🚨 음성 인식 오류 발생: ${event.error}`;
+                voiceStatusDisplay.innerText = `음성 인식 오류 발생: ${event.error}`;
                 // 오류 발생 시 누적 기록에 오류 메시지 추가 및 업데이트
                 accumulatedTranscript += `[오류: ${event.error}]\n`;
                 speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`;
