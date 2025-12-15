@@ -61,13 +61,17 @@
             width: 1000px;
             padding: 10px;
             margin-bottom: 20px;
-            text-align: center;
             font-weight: bold;
             color: #ffffff;
             background-color: #000000;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             min-height: 40px;
+            
+            /* ✅ 수정된 부분: Flexbox를 사용하여 수직/수평 중앙 정렬 */
+            display: flex;
+            justify-content: center; /* 수평 중앙 정렬 */
+            align-items: center; /* 수직 중앙 정렬 */
         }
 
         .comparison-container {
@@ -88,13 +92,13 @@
             background-color: #f0f0f0;
             position: relative;
             transition: transform 0.2s ease-in-out;
-            z-index: 1; /* ✅ 추가: 기본 z-index 설정 */
+            z-index: 1; /* 기본 z-index 설정 */
         }
 
         .left-panel:hover {
             transform: scale(1.02);
             cursor: pointer;
-            z-index: 10; /* ✅ 수정: 호버 시 z-index를 높여 앞으로 나오게 함 */
+            z-index: 10; /* 호버 시 z-index를 높여 앞으로 나오게 함 */
         }
 
         .right-panel {
