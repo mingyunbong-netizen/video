@@ -23,14 +23,14 @@
         }
 
         /* ------------------------------------------- */
-        /* 로고 스타일 */
+        /* 로고 스타일 (수정됨) */
         /* ------------------------------------------- */
         #homepage-logo {
             cursor: pointer;
             position: fixed; /* 고정 위치 유지 */
-            top: 28px; /* ✨ 수정된 값: 35px -> 28px */
-            left: 120px; /* ✨ 수정된 값: 60px -> 120px */
-            font-size: 40px; /* ✨ 수정된 값: 30px -> 40px */
+            top: 28px; /* 수정됨: 35px -> 28px */
+            left: 120px; /* 수정됨: 60px -> 120px */
+            font-size: 40px; /* 수정됨: 30px -> 40px */
             font-weight: bold;
             font-family: 'BookkGothic', sans-serif;
             color: black;
@@ -38,14 +38,14 @@
             transition: font-size 0.3s ease;
         }
         #homepage-logo:hover {
-            font-size: 42px; /* ✨ 수정된 값: 32px -> 42px */
+            font-size: 42px; /* 수정된 폰트 크기에 맞춰 hover 크기도 조정 */
         }
-        
-        /* ✅ 새로 추가된 스타일: 로고 정보 박스 */
+        
+        /* ✅ 새로 추가된 스타일: 로고 정보 박스 (로고 위치에 맞춰 수정됨) */
         #logo-info-box {
             position: fixed;
-            top: 75px; 
-            left: 120px; /* 로고 위치에 맞춰 60px -> 120px로 수정 */
+            top: 80px; /* 로고 크기에 맞춰 조정 */
+            left: 120px; /* 로고 위치에 맞춰 조정 */
             width: 450px; /* 문구 길이에 맞춰 적절히 조정 */
             padding: 15px;
             background-color: rgba(255, 255, 255, 0.95); /* 불투명한 흰색 배경 */
@@ -78,7 +78,7 @@
             background-color: #f7f7f7;
             flex-shrink: 0; /* 높이가 줄어들지 않게 고정 */
         }
-        
+        
         #voice-status-display {
             width: 1000px;
             padding: 10px;
@@ -89,7 +89,7 @@
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             min-height: 40px;
-            
+            
             /* Flexbox를 사용하여 수직/수평 중앙 정렬 */
             display: flex;
             justify-content: center; /* 수평 중앙 정렬 */
@@ -158,7 +158,7 @@
             position: absolute;
             width: 500px;
         }
-        
+        
         /* 음성 인식 오버레이 */
         #speech-command-overlay {
             position: absolute;
@@ -184,7 +184,7 @@
         #speech-command-overlay::-webkit-scrollbar {
             display: none;
         }
-        
+        
         #interim-text {
             color: #FFFF00;	
             font-style: italic;
@@ -207,7 +207,7 @@
     </style>
 </head>
 <body>
-    
+    
     <div id="homepage-logo" onclick="goToHomePage()">
         서사, 위기 속에서
     </div>
@@ -237,7 +237,7 @@
                     웹캠 및 마이크 접근을 요청 중입니다...
                 </div>
                 <video id="webcam-feed" autoplay playsinline muted style="display: none;"></video>
-                
+                
                 <div id="speech-command-overlay"></div>
             </div>
         </div>
@@ -285,7 +285,7 @@
                 // 투명화가 완료된 후 완전히 숨김 (transition 시간 고려)
                 setTimeout(() => {
                     logoInfoBox.style.visibility = 'hidden';
-                }, 500); 
+                }, 500); 
             });
         }
 
@@ -314,7 +314,7 @@
                 }, { once: true });
             });
         }
-        
+        
         myVideo.addEventListener('ended', () => {
             const currentVideoName = myVideo.currentSrc.substring(myVideo.currentSrc.lastIndexOf('/') + 1);
             if (currentVideoName !== BASE_VIDEO_PATH) {
@@ -325,7 +325,7 @@
         function switchToBaseVideo() {
             videoSource.src = BASE_VIDEO_PATH;
             myVideo.load();
-            
+            
             myVideo.loop = true;
             myVideo.muted = true;
             myVideo.play().catch(e => console.error("기본 비디오 재생 실패:", e));
@@ -351,7 +351,7 @@
                 myVideo.play().catch(e2 => console.error("음소거 재생도 실패:", e2));
             });
         }
-        
+        
         // =================================================================
         // 2. 음성 인식 및 통합 로직 (개선)
         // =================================================================
@@ -361,7 +361,7 @@
         const speechRecognition = window.SpeechRecognition ? new SpeechRecognition() : null;
         let isListening = false;
         let isMediaReady = false;
-        
+        
         // 누적된 음성 기록을 저장하는 변수
         let accumulatedTranscript = '대화 메모장\n';	
 
@@ -422,7 +422,7 @@
                         interimTranscript += transcript;
                     }
                 }
-                
+                
                 // 최종 텍스트를 누적 기록 변수에 추가 (줄바꿈 포함)
                 if (finalTranscript) {
                     accumulatedTranscript += finalTranscript + '\n';
@@ -441,7 +441,7 @@
                     const transcript = latestFinalTranscript.trim();
                     let matchedVideoPath = null;
                     let matchedKeyword = null;
-                    
+                    
                     for (const keyword in modelKeywordMap) {
                         if (transcript.includes(keyword)) {
                             matchedVideoPath = modelKeywordMap[keyword];
@@ -452,7 +452,7 @@
 
                     if (matchedVideoPath) {
                         voiceStatusDisplay.innerText = `🔍 주제 확인: "${matchedKeyword}" -> 대화 재생 중.`;
-                        
+                        
                         if (matchedVideoPath === BASE_VIDEO_PATH) {
                             switchToBaseVideo();
                         } else {
@@ -477,7 +477,7 @@
                 isListening = false;
                 // 인식이 멈출 때, 임시 텍스트를 제거하고 누적 기록만 표시
                 speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`;	
-                
+                
                 // 약간의 딜레이 후 연속 인식 재시작 로직 강화 (비디오 재생 중에도 마이크 유지)
                 if (isMediaReady) {	
                     // onend 후 바로 start() 호출 시 브라우저에 따라 오류가 발생할 수 있어 딜레이 추가
@@ -499,21 +499,21 @@
                 // 이미 실행 중일 때 발생하는 오류 무시
             }
         }
-        
+        
         // 웹캠 시작 함수: 마이크 접근을 포함하도록 유지
         async function startWebcam() {
             try {
                 // 웹캠(video: true) 및 마이크(audio: true) 권한 요청
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });	
-                
+                
                 // 오디오 에코 방지를 위해 비디오 트랙만 추출하여 비디오 요소에 연결
                 const videoTrack = stream.getVideoTracks()[0];
                 const videoOnlyStream = new MediaStream([videoTrack]);
-                
+                
                 loadingMessage.style.display = 'none';
                 videoElement.style.display = 'block';
                 videoElement.srcObject = videoOnlyStream; // 비디오 전용 스트림 할당
-                
+                
                 isMediaReady = true;
 
                 // 동적으로 생성한 키워드 목록을 안내 메시지에 포함
@@ -542,10 +542,14 @@
         const threeJsContainer = document.getElementById('threejs-container');
 
         let currentIntersected = null; // 현재 마우스 오버된 모델
+        let vibratingModel = null; // 현재 진동 중인 모델 (추가됨)
+        let vibrationStartTime = 0; // 진동 시작 시간 (밀리초) (추가됨)
+        const VIBRATION_DURATION = 2000; // 2초 (추가됨)
+
         let rotationSpeed = 0.005;
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
-        
+        
         // modelsToLoad는 위에서 정의됨 (재사용)
 
         const FIXED_POSITION_Y = 0.0;
@@ -555,7 +559,7 @@
 
         const scene = new THREE.Scene();
         // 3D 모델 가시성을 위해 배경색을 WhiteSmoke로 변경
-        scene.background = new THREE.Color(0xf5f5f5); 
+        scene.background = new THREE.Color(0xf5f5f5); 
 
         // 카메라 생성 시 컨테이너의 현재 크기를 사용
         const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
@@ -591,6 +595,7 @@
                     const model = gltf.scene;
 
                     model.position.x = startX + (index * MODEL_SPACING_X);
+                    model.userData.originalX = model.position.x; // 원본 X 위치 저장 (추가됨)
                     model.position.y = FIXED_POSITION_Y;
                     model.position.z = FIXED_POSITION_Z;
 
@@ -633,28 +638,28 @@
                     newIntersected = target;
                 }
             }
-            
+            
             // 마우스 오버 상태 변경 감지
             if (currentIntersected !== newIntersected) {
-                // 이전 모델 크기 복원
-                if (currentIntersected) {
-                    currentIntersected.scale.copy(currentIntersected.userData.originalScale);
-                }
+                
+                // 이전 모델 크기 복원 로직은 삭제됨
+                // if (currentIntersected) { ... }
 
-                // 새 모델 크기 확대
                 currentIntersected = newIntersected;
 
                 if (currentIntersected) {
-                    currentIntersected.scale.multiplyScalar(HOVER_SCALE_FACTOR);
+                    // 새로운 모델에 마우스 오버 시 진동 효과 시작 (수정됨)
+                    vibratingModel = currentIntersected;
+                    vibrationStartTime = performance.now();
                 }
             }
         }
 
         function onThreeJsMouseLeave() {
-            if (currentIntersected) {
-                currentIntersected.scale.copy(currentIntersected.userData.originalScale);
-                currentIntersected = null;
-            }
+            // 마우스가 뷰어를 완전히 벗어나면 현재 오버 상태 해제
+            currentIntersected = null;
+            // 크기 복원 로직 삭제
+            // if (currentIntersected) { ... }
         }
 
         function onThreeJsClick(event) {
@@ -667,14 +672,34 @@
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
+            const currentTime = performance.now(); // 현재 시간 저장 (추가됨)
+
 
             // 마우스 오버된 모델만 빠르게 회전, 나머지는 느리게 자동 회전
             scene.children.forEach(object => {
                 if (object.isGroup || object.isMesh) {
+                    
+                    // 1. 자동 회전
                     if (object === currentIntersected) {
                         object.rotation.y += rotationSpeed * 5;
                     } else {
                         object.rotation.y += rotationSpeed;
+                    }
+
+                    // 2. 진동 효과 (새로 추가된 로직)
+                    if (object === vibratingModel) {
+                        const elapsed = currentTime - vibrationStartTime;
+
+                        if (elapsed < VIBRATION_DURATION) {
+                            // 사인 함수를 사용하여 좌우로 떨리는 효과 적용
+                            // Math.sin(시간 * 속도) * 진폭
+                            const wobble = Math.sin(elapsed * 0.05) * 0.1;
+                            object.position.x = object.userData.originalX + wobble;
+                        } else {
+                            // 2초가 지나면 진동 종료 및 위치 복구
+                            object.position.x = object.userData.originalX;
+                            vibratingModel = null;
+                        }
                     }
                 }
             });
