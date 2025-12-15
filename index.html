@@ -23,20 +23,18 @@
         }
 
         /* ------------------------------------------- */
-        /* 로고 스타일 (수정됨) */
+        /* 로고 스타일 (최종 수정됨: 크기 및 위치 반영) */
         /* ------------------------------------------- */
-        /* ✅ 수정된 부분 1: 폰트 크기 변경 효과 제거 */
         #homepage-logo {
             cursor: pointer;
             position: fixed; /* 고정 위치 유지 */
-            top: 35px;
-            left: 60px;
-            font-size: 30px;
+            top: 28px;        /* 요청하신 값으로 변경 */
+            left: 110px;      /* 요청하신 값으로 변경 */
+            font-size: 40px;  /* 요청하신 값으로 변경 */
             font-weight: bold;
             font-family: 'BookkGothic', sans-serif;
             color: black;
             z-index: 100;
-            /* transition: font-size 0.3s ease; // 제거 */
         }
 
         /* ✅ 새로 추가된 CSS: 좌우 진동 (목소리 떨림) 효과 */
@@ -62,11 +60,12 @@
         /* ✅ 새로 추가된 스타일: 로고 정보 박스 */
         #logo-info-box {
             position: fixed;
+            /* 로고 위치에 맞게 정보 박스 위치 조정 */
             top: 75px; 
-            left: 60px;
-            width: 450px; /* 문구 길이에 맞춰 적절히 조정 */
+            left: 110px; 
+            width: 450px; 
             padding: 15px;
-            background-color: rgba(255, 255, 255, 0.95); /* 불투명한 흰색 배경 */
+            background-color: rgba(255, 255, 255, 0.95); 
             color: #333;
             border: 1px solid #ccc;
             border-radius: 8px;
@@ -74,11 +73,11 @@
             font-size: 14px;
             line-height: 1.6;
             font-weight: normal;
-            z-index: 99; /* 로고보다 아래에 위치 */
-            opacity: 0; /* 초기에는 투명하게 숨김 */
-            visibility: hidden; /* 초기에는 렌더링에서 제외 */
-            transition: opacity 0.5s ease, visibility 0.5s ease; /* 부드러운 전환 효과 */
-            white-space: pre-wrap; /* 줄바꿈을 유지하도록 설정 */
+            z-index: 99; 
+            opacity: 0; 
+            visibility: hidden; 
+            transition: opacity 0.5s ease, visibility 0.5s ease; 
+            white-space: pre-wrap; 
         }
         /* ------------------------------------------- */
 
