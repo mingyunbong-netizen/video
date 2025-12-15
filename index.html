@@ -177,7 +177,7 @@
                 <div id="loading-message" class="loading-text">
                     웹캠 및 마이크 접근을 요청 중입니다...
                 </div>
-                <video id="webcam-feed" autoplay playsinline **muted** style="display: none;"></video>
+                <video id="webcam-feed" autoplay playsinline muted style="display: none;"></video>
                 
                 <div id="speech-command-overlay"></div>
             </div>
@@ -400,10 +400,19 @@
                 isListening = false;
                 // 인식이 멈출 때, 임시 텍스트를 제거하고 누적 기록만 표시
                 speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`;	
+                
+                // ✅ 수정 3: 음성 인식이 꺼지면 즉시 다시 시작하도록 강화 (비디오 재생 중에도 마이크 유지)
                 if (isMediaReady) {	
-                    setTimeout(() => {
+                    try {
                         speechRecognition.start();
-                    }, 500);
+                    } catch (e) {
+                        // 연속 실행 오류 시, 약간의 딜레이 후 재시도
+                        setTimeout(() => {
+                            if (isMediaReady) {
+                                speechRecognition.start();
+                            }
+                        }, 500); 
+                    }
                 }
             };
 
@@ -420,22 +429,19 @@
                 // 웹캠(video: true) 및 마이크(audio: true) 권한 요청
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });	
                 
-                // 💡 수정 2: 오디오 에코 방지 로직 추가
-                // 1. 비디오 트랙만 추출
+                // ✅ 수정 2: 오디오 에코 방지를 위해 비디오 트랙만 추출하여 연결
                 const videoTrack = stream.getVideoTracks()[0];
-                // 2. 비디오 트랙만 포함하는 새 MediaStream 생성
                 const videoOnlyStream = new MediaStream([videoTrack]);
                 
                 loadingMessage.style.display = 'none';
                 videoElement.style.display = 'block';
-                // 3. 비디오 요소에 비디오 전용 스트림 할당 (오디오 미포함)
-                videoElement.srcObject = videoOnlyStream; 
+                videoElement.srcObject = videoOnlyStream; // 비디오 전용 스트림 할당
                 
                 isMediaReady = true;
 
                 voiceStatusDisplay.innerText = '✅ 웹캠 및 마이크 접근 완료. 음성 인식을 시작합니다.';
 
-                // 접근 성공 후 음성 인식 시작 (마이크 소리는 SpeechRecognition에서 사용)
+                // 접근 성공 후 음성 인식 시작 (마이크 소리는 SpeechRecognition이 사용)
                 startSpeechRecognition();	
 
             } catch (err) {
