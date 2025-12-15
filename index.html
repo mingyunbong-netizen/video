@@ -304,15 +304,16 @@
         let accumulatedTranscript = '대화 메모장\n';	
 
         // 모델 정보 정의
+        // ✅ scale 값을 2배로 증가시켜 모델 크기를 키움
         const modelsToLoad = [
-            { name: 'shoes.glb', scale: 10, video: 'shoes.mp4', keyword: '신발' },
-            { name: 'bag.glb', scale: 7, video: 'bag.mp4', keyword: '가방' },
-            { name: 'ball.glb', scale: 5, video: 'Stretching.mp4', keyword: '공' },
-            { name: 'book.glb', scale: 10, video: 'book.mp4', keyword: '책' },
-            { name: 'close.glb', scale: 5, video: 'clothes.mp4', keyword: '옷' },
-            { name: 'glasses.glb', scale: 20, video: 'glasses.mp4', keyword: '안경' },
-            { name: 'guard.glb', scale: 10, video: 'brace.mp4', keyword: '보호대' },
-            { name: 'persimmon.glb', scale: 20, video: 'food.mp4', keyword: '감' },
+            { name: 'shoes.glb', scale: 20, video: 'shoes.mp4', keyword: '신발' },
+            { name: 'bag.glb', scale: 14, video: 'bag.mp4', keyword: '가방' },
+            { name: 'ball.glb', scale: 10, video: 'Stretching.mp4', keyword: '공' },
+            { name: 'book.glb', scale: 20, video: 'book.mp4', keyword: '책' },
+            { name: 'close.glb', scale: 10, video: 'clothes.mp4', keyword: '옷' },
+            { name: 'glasses.glb', scale: 40, video: 'glasses.mp4', keyword: '안경' },
+            { name: 'guard.glb', scale: 20, video: 'brace.mp4', keyword: '보호대' },
+            { name: 'persimmon.glb', scale: 40, video: 'food.mp4', keyword: '감' },
         ];
 
         // 음성 인식 키워드 맵을 modelsToLoad를 기반으로 생성
