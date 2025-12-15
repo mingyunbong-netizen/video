@@ -40,6 +40,28 @@
         #homepage-logo:hover {
             font-size: 32px;
         }
+        
+        /* ✅ 새로 추가된 스타일: 로고 정보 박스 */
+        #logo-info-box {
+            position: fixed;
+            top: 75px; 
+            left: 60px;
+            width: 450px; /* 문구 길이에 맞춰 적절히 조정 */
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.95); /* 불투명한 흰색 배경 */
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            font-size: 14px;
+            line-height: 1.6;
+            font-weight: normal;
+            z-index: 99; /* 로고보다 아래에 위치 */
+            opacity: 0; /* 초기에는 투명하게 숨김 */
+            visibility: hidden; /* 초기에는 렌더링에서 제외 */
+            transition: opacity 0.5s ease, visibility 0.5s ease; /* 부드러운 전환 효과 */
+            white-space: pre-wrap; /* 줄바꿈을 유지하도록 설정 */
+        }
         /* ------------------------------------------- */
 
         /* =================================================== */
@@ -50,7 +72,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 30px; 
+            padding-top: 30px;
             padding-bottom: 10px;
             box-sizing: border-box;
             background-color: #f7f7f7;
@@ -68,7 +90,7 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             min-height: 40px;
             
-            /* ✅ 수정된 부분: Flexbox를 사용하여 수직/수평 중앙 정렬 */
+            /* Flexbox를 사용하여 수직/수평 중앙 정렬 */
             display: flex;
             justify-content: center; /* 수평 중앙 정렬 */
             align-items: center; /* 수직 중앙 정렬 */
@@ -141,7 +163,7 @@
         #speech-command-overlay {
             position: absolute;
             top: 10px;
-            right: -300px; 
+            right: -300px;
             width: 200px;
             height: 480px; /* 500px - 20px padding */
             padding: 10px;
@@ -175,7 +197,7 @@
         #threejs-container {
             width: 100vw;
             flex-grow: 1; /* 남은 공간을 모두 채움 */
-            overflow: hidden; 
+            overflow: hidden;
             cursor: grab;
         }
 
@@ -188,6 +210,16 @@
     
     <div id="homepage-logo" onclick="goToHomePage()">
         서사, 위기 속에서
+    </div>
+
+    <div id="logo-info-box">
+        소셜네트워크가 발전하면서 우리는 어느 때보다 가까워지면서 멀어졌습니다.
+다른 사람의 취미, 좋아하는 음식 등 수많은 정보는 알 수 있지만
+왜 그것들을 좋아하게 되었는지는 알기 어려워졌습니다.
+
+이 웹사이트는 오늘날 콜포비아(전화 공포증) 사례와 같이 대화를 어려워하는 사람들을 위해서
+사이트에서 대화 해보며 사람과의 대화가 필요한 이유와 사람 간에 서사가
+어떻게 쌓여나가는지 안내하는 웹사이트입니다.
     </div>
     <div class="top-comparison-section">
         <div id="voice-status-display">마이크 및 웹캠 접근 권한을 허용해 주세요.</div>
@@ -232,6 +264,30 @@
             window.location.href = targetUrl;
         }
         window.goToHomePage = goToHomePage;
+
+
+        // =================================================================
+        // 4. 로고 호버 이벤트 로직 (추가된 부분)
+        // =================================================================
+        const homepageLogo = document.getElementById('homepage-logo');
+        const logoInfoBox = document.getElementById('logo-info-box');
+
+        if (homepageLogo && logoInfoBox) {
+            // 마우스 오버 시
+            homepageLogo.addEventListener('mouseenter', () => {
+                logoInfoBox.style.opacity = '1';
+                logoInfoBox.style.visibility = 'visible';
+            });
+
+            // 마우스 이탈 시
+            homepageLogo.addEventListener('mouseleave', () => {
+                logoInfoBox.style.opacity = '0';
+                // 투명화가 완료된 후 완전히 숨김 (transition 시간 고려)
+                setTimeout(() => {
+                    logoInfoBox.style.visibility = 'hidden';
+                }, 500); 
+            });
+        }
 
 
         // =================================================================
