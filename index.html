@@ -116,10 +116,10 @@
         
         #speech-command-overlay {
             position: absolute;
-            top: 10px; 
-            right: -300px; 
-            width: 250px; 
-            height: 480px; 
+            top: 10px;	
+            right: -300px;	
+            width: 250px;	
+            height: 480px;	
             padding: 10px;
             background: rgba(0, 0, 0, 0.65);
             color: white;
@@ -140,7 +140,7 @@
         }
         
         #interim-text {
-            color: #FFFF00; 
+            color: #FFFF00;	
             font-style: italic;
         }
 
@@ -177,7 +177,7 @@
                 <div id="loading-message" class="loading-text">
                     웹캠 및 마이크 접근을 요청 중입니다...
                 </div>
-                <video id="webcam-feed" autoplay playsinline style="display: none;"></video>
+                <video id="webcam-feed" autoplay playsinline **muted** style="display: none;"></video>
                 
                 <div id="speech-command-overlay"></div>
             </div>
@@ -281,7 +281,7 @@
         let modelKeywordMap = {};
         
         // 누적된 음성 기록을 저장하는 변수
-        let accumulatedTranscript = '대화 메모장\n'; 
+        let accumulatedTranscript = '대화 메모장\n';	
 
         // 모델 정보 정의
         const modelsToLoad = [
@@ -298,7 +298,7 @@
         // 음성 인식 키워드 맵 생성
         modelsToLoad.forEach(model => {
             let keyword;
-            switch (model.name.split('.')[0]) { 
+            switch (model.name.split('.')[0]) {	
                 case 'shoes': keyword = '신발'; break;
                 case 'bag': keyword = '가방'; break;
                 case 'ball': keyword = '공'; break;
@@ -313,7 +313,7 @@
                 modelKeywordMap[keyword] = model.video;
             }
         });
-        modelKeywordMap['기본'] = BASE_VIDEO_PATH; 
+        modelKeywordMap['기본'] = BASE_VIDEO_PATH;	
 
 
         function startSpeechRecognition() {
@@ -323,7 +323,7 @@
             }
 
             speechRecognition.continuous = true;
-            speechRecognition.interimResults = true; 
+            speechRecognition.interimResults = true;	
             speechRecognition.lang = 'ko-KR';
 
             speechRecognition.onstart = function() {
@@ -331,7 +331,7 @@
                 voiceStatusDisplay.innerText = ' 대화를 걸어주세요!. "신발", "가방", "안경" 등을 말해보세요.';
                 speechCommandOverlay.style.display = 'block';
                 // HTML로 누적 기록 초기 표시
-                speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div><span id="interim-text">...말씀하세요.</span>`; 
+                speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div><span id="interim-text">...말씀하세요.</span>`;	
             };
 
             speechRecognition.onresult = function(event) {
@@ -355,8 +355,8 @@
                 }
 
                 // 화면에 '누적된 최종 기록'과 '현재 말하고 있는 임시 텍스트'를 HTML 태그를 사용하여 분리하여 표시
-                speechCommandOverlay.innerHTML = 
-                    `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>` + 
+                speechCommandOverlay.innerHTML =	
+                    `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>` +	
                     `<span id="interim-text">${interimTranscript}</span>`;
 
                 // 스크롤이 생긴 경우 가장 아래로 이동
@@ -399,8 +399,8 @@
             speechRecognition.onend = function() {
                 isListening = false;
                 // 인식이 멈출 때, 임시 텍스트를 제거하고 누적 기록만 표시
-                speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`; 
-                if (isMediaReady) { 
+                speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`;	
+                if (isMediaReady) {	
                     setTimeout(() => {
                         speechRecognition.start();
                     }, 500);
@@ -417,17 +417,26 @@
         // 웹캠 시작 함수: 마이크 접근을 포함하도록 유지
         async function startWebcam() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); 
+                // 웹캠(video: true) 및 마이크(audio: true) 권한 요청
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });	
+                
+                // 💡 수정 2: 오디오 에코 방지 로직 추가
+                // 1. 비디오 트랙만 추출
+                const videoTrack = stream.getVideoTracks()[0];
+                // 2. 비디오 트랙만 포함하는 새 MediaStream 생성
+                const videoOnlyStream = new MediaStream([videoTrack]);
                 
                 loadingMessage.style.display = 'none';
                 videoElement.style.display = 'block';
-                videoElement.srcObject = stream;
+                // 3. 비디오 요소에 비디오 전용 스트림 할당 (오디오 미포함)
+                videoElement.srcObject = videoOnlyStream; 
+                
                 isMediaReady = true;
 
                 voiceStatusDisplay.innerText = '✅ 웹캠 및 마이크 접근 완료. 음성 인식을 시작합니다.';
 
-                // 접근 성공 후 음성 인식 시작
-                startSpeechRecognition(); 
+                // 접근 성공 후 음성 인식 시작 (마이크 소리는 SpeechRecognition에서 사용)
+                startSpeechRecognition();	
 
             } catch (err) {
                 console.error("웹캠/마이크 접근 권한 거부 또는 오류 발생:", err);
@@ -437,7 +446,7 @@
             }
         }
 
-        window.onload = startWebcam; 
+        window.onload = startWebcam;	
 
         // =================================================================
         // 3. Three.js 3D 뷰어 로직
