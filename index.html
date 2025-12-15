@@ -12,12 +12,14 @@
         }
 
         /* ------------------------------------------- */
-        /* 추가된 로고 스타일 */
+        /* 수정된 로고 스타일 */
         /* ------------------------------------------- */
         #homepage-logo {
             cursor: pointer;
             position: fixed;
-            top: 40px;
+            /* 🚀 이 부분을 40px에서 15px로 수정하여 
+               상단 패딩 (30px)의 중앙에 배치합니다. */
+            top: 15px; 
             left: 20px;
             font-size: 30px;
             font-weight: bold;
@@ -471,7 +473,7 @@
         
         // modelsToLoad는 위에서 정의됨 (재사용)
 
-        const FIXED_POSITION_Y = 0.0; // ✨ 수정 완료: 3D 모델의 Y 좌표를 0.0으로 조정 (원래 -4.0)
+        const FIXED_POSITION_Y = 0.0; 
         const FIXED_POSITION_Z = 0.0;
         const MODEL_SPACING_X = 3.0;
         const HOVER_SCALE_FACTOR = 1.2;
