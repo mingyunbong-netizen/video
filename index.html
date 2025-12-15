@@ -9,6 +9,7 @@
             margin: 0;
             font-family: Arial, sans-serif;
             overflow-x: hidden;
+            background-color: #f7f7f7; /* 배경색 통일 */
         }
 
         /* ------------------------------------------- */
@@ -17,13 +18,13 @@
         #homepage-logo {
             cursor: pointer;
             position: fixed;
-            top: 40px;
+            top: 20px; /* 상단 여백 조정 */
             left: 20px;
             font-size: 30px;
             font-weight: bold;
             font-family: 'BookkGothic', sans-serif;
             color: black;
-            z-index: 100; /* 다른 요소 위에 표시되도록 최상위로 설정 */
+            z-index: 100;
             transition: font-size 0.3s ease;
         }
         #homepage-logo:hover {
@@ -51,6 +52,7 @@
             background-color: #000000;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            min-height: 40px; /* 최소 높이 확보 */
         }
 
         .comparison-container {
@@ -88,7 +90,7 @@
             align-items: center;
             box-sizing: border-box;
             background-color: #333333;
-            position: relative;
+            position: relative; /* 자식인 overlay의 기준점이 됨 */
         }
 
         #my-video {
@@ -114,12 +116,13 @@
             width: 500px;
         }
         
+        /* ✅ 수정 1: right-panel 내부의 절대 위치로 변경 */
         #speech-command-overlay {
             position: absolute;
-            top: 10px;	
-            right: -300px;	
-            width: 250px;	
-            height: 480px;	
+            top: 10px;
+            right: 10px; /* right-panel 내부 오른쪽 상단 */
+            width: 200px; /* 폭 조정 */
+            height: 480px;
             padding: 10px;
             background: rgba(0, 0, 0, 0.65);
             color: white;
@@ -128,7 +131,7 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             box-sizing: border-box;
             overflow-y: auto;
-            text-align: center;
+            text-align: left; /* 기록은 왼쪽 정렬이 자연스러움 */
             white-space: pre-wrap;
             z-index: 10;
             display: none;
@@ -198,13 +201,13 @@
 
     <script type="module">
         // =================================================================
-        // 0. 로고 클릭 시 이동 함수 (새로 추가됨)
+        // 0. 로고 클릭 시 이동 함수
         // =================================================================
         function goToHomePage() {
             const targetUrl = 'https://mingyunbong-netizen.github.io/home/#';
             window.location.href = targetUrl;
         }
-        window.goToHomePage = goToHomePage; // 전역 스코프에 등록하여 onclick에서 호출 가능하게 함
+        window.goToHomePage = goToHomePage;
 
 
         // =================================================================
@@ -270,7 +273,7 @@
         }
         
         // =================================================================
-        // 2. 음성 인식 및 통합 로직 (누적 기록 개선)
+        // 2. 음성 인식 및 통합 로직 (개선)
         // =================================================================
 
         window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -278,43 +281,33 @@
         const speechRecognition = window.SpeechRecognition ? new SpeechRecognition() : null;
         let isListening = false;
         let isMediaReady = false;
-        let modelKeywordMap = {};
         
         // 누적된 음성 기록을 저장하는 변수
         let accumulatedTranscript = '대화 메모장\n';	
 
         // 모델 정보 정의
         const modelsToLoad = [
-            { name: 'shoes.glb', scale: 10, video: 'shoes.mp4' },
-            { name: 'bag.glb', scale: 7, video: 'bag.mp4' },
-            { name: 'ball.glb', scale: 5, video: 'Stretching.mp4' },
-            { name: 'book.glb', scale: 10, video: 'book.mp4' },
-            { name: 'close.glb', scale: 5, video: 'clothes.mp4' },
-            { name: 'glasses.glb', scale: 20, video: 'glasses.mp4' },
-            { name: 'guard.glb', scale: 10, video: 'brace.mp4' },
-            { name: 'persimmon.glb', scale: 20, video: 'food.mp4' },
+            { name: 'shoes.glb', scale: 10, video: 'shoes.mp4', keyword: '신발' },
+            { name: 'bag.glb', scale: 7, video: 'bag.mp4', keyword: '가방' },
+            { name: 'ball.glb', scale: 5, video: 'Stretching.mp4', keyword: '공' },
+            { name: 'book.glb', scale: 10, video: 'book.mp4', keyword: '책' },
+            { name: 'close.glb', scale: 5, video: 'clothes.mp4', keyword: '옷' },
+            { name: 'glasses.glb', scale: 20, video: 'glasses.mp4', keyword: '안경' },
+            { name: 'guard.glb', scale: 10, video: 'brace.mp4', keyword: '보호대' },
+            { name: 'persimmon.glb', scale: 20, video: 'food.mp4', keyword: '감' },
         ];
 
-        // 음성 인식 키워드 맵 생성
+        // ✅ 개선 1: 음성 인식 키워드 맵을 modelsToLoad를 기반으로 생성
+        const modelKeywordMap = {};
         modelsToLoad.forEach(model => {
-            let keyword;
-            switch (model.name.split('.')[0]) {	
-                case 'shoes': keyword = '신발'; break;
-                case 'bag': keyword = '가방'; break;
-                case 'ball': keyword = '공'; break;
-                case 'book': keyword = '책'; break;
-                case 'close': keyword = '옷'; break;
-                case 'glasses': keyword = '안경'; break;
-                case 'guard': keyword = '보호대'; break;
-                case 'persimmon': keyword = '감'; break;
-                default: keyword = null;
-            }
-            if (keyword) {
-                modelKeywordMap[keyword] = model.video;
+            if (model.keyword) {
+                modelKeywordMap[model.keyword] = model.video;
             }
         });
         modelKeywordMap['기본'] = BASE_VIDEO_PATH;	
 
+        // ✅ 개선 2: 사용자 안내를 위한 키워드 문자열 생성
+        const keywords = Object.keys(modelKeywordMap).filter(k => k !== '기본').join(', ');
 
         function startSpeechRecognition() {
             if (!speechRecognition) {
@@ -328,7 +321,8 @@
 
             speechRecognition.onstart = function() {
                 isListening = true;
-                voiceStatusDisplay.innerText = ' 대화를 걸어주세요!. "신발", "가방", "안경" 등을 말해보세요.';
+                // ✅ 개선 3: 동적으로 생성한 키워드 목록을 안내 메시지에 포함
+                voiceStatusDisplay.innerText = `💬 대화를 걸어주세요! "${keywords}" 등을 말해보세요.`;
                 speechCommandOverlay.style.display = 'block';
                 // HTML로 누적 기록 초기 표시
                 speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div><span id="interim-text">...말씀하세요.</span>`;	
@@ -366,15 +360,18 @@
                 if (latestFinalTranscript) {
                     const transcript = latestFinalTranscript.trim();
                     let matchedVideoPath = null;
+                    let matchedKeyword = null;
+                    
                     for (const keyword in modelKeywordMap) {
                         if (transcript.includes(keyword)) {
                             matchedVideoPath = modelKeywordMap[keyword];
+                            matchedKeyword = keyword;
                             break;
                         }
                     }
 
                     if (matchedVideoPath) {
-                        voiceStatusDisplay.innerText = `주제 확인: "${transcript}" -> 대화 재생 중.`;
+                        voiceStatusDisplay.innerText = `🔍 주제 확인: "${matchedKeyword}" -> 대화 재생 중.`;
                         
                         if (matchedVideoPath === BASE_VIDEO_PATH) {
                             switchToBaseVideo();
@@ -382,13 +379,13 @@
                             playSpecificVideo(matchedVideoPath);
                         }
                     } else {
-                        voiceStatusDisplay.innerText = `주제를 찾지 못했어요: "${transcript}" -> 아래 요소들을 말해주세요.`;
+                        voiceStatusDisplay.innerText = `⚠️ 주제를 찾지 못했어요: "${transcript}" -> 아래 요소들을 말해주세요.`;
                     }
                 }
             };
 
             speechRecognition.onerror = function(event) {
-                voiceStatusDisplay.innerText = `음성 인식 오류 발생: ${event.error}`;
+                voiceStatusDisplay.innerText = `❌ 음성 인식 오류 발생: ${event.error}`;
                 // 오류 발생 시 누적 기록에 오류 메시지 추가 및 업데이트
                 accumulatedTranscript += `[오류: ${event.error}]\n`;
                 speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`;
@@ -401,18 +398,18 @@
                 // 인식이 멈출 때, 임시 텍스트를 제거하고 누적 기록만 표시
                 speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`;	
                 
-                // ✅ 수정 3: 음성 인식이 꺼지면 즉시 다시 시작하도록 강화 (비디오 재생 중에도 마이크 유지)
+                // ✅ 개선 4: 약간의 딜레이 후 연속 인식 재시작 로직 강화 (비디오 재생 중에도 마이크 유지)
                 if (isMediaReady) {	
-                    try {
-                        speechRecognition.start();
-                    } catch (e) {
-                        // 연속 실행 오류 시, 약간의 딜레이 후 재시도
-                        setTimeout(() => {
-                            if (isMediaReady) {
+                    // onend 후 바로 start() 호출 시 브라우저에 따라 오류가 발생할 수 있어 딜레이 추가
+                    setTimeout(() => {
+                        if (isMediaReady && !isListening) {
+                            try {
                                 speechRecognition.start();
+                            } catch (e) {
+                                console.warn("음성 인식 재시작 오류:", e);
                             }
-                        }, 500); 
-                    }
+                        }
+                    }, 100); 
                 }
             };
 
@@ -429,7 +426,7 @@
                 // 웹캠(video: true) 및 마이크(audio: true) 권한 요청
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });	
                 
-                // ✅ 수정 2: 오디오 에코 방지를 위해 비디오 트랙만 추출하여 연결
+                // 오디오 에코 방지를 위해 비디오 트랙만 추출하여 비디오 요소에 연결
                 const videoTrack = stream.getVideoTracks()[0];
                 const videoOnlyStream = new MediaStream([videoTrack]);
                 
@@ -439,7 +436,8 @@
                 
                 isMediaReady = true;
 
-                voiceStatusDisplay.innerText = '✅ 웹캠 및 마이크 접근 완료. 음성 인식을 시작합니다.';
+                // ✅ 개선 3 반영: 동적으로 생성한 키워드 목록을 안내 메시지에 포함
+                voiceStatusDisplay.innerText = `✅ 웹캠 및 마이크 접근 완료. 음성 인식을 시작합니다: "${keywords}"`;
 
                 // 접근 성공 후 음성 인식 시작 (마이크 소리는 SpeechRecognition이 사용)
                 startSpeechRecognition();	
@@ -455,7 +453,7 @@
         window.onload = startWebcam;	
 
         // =================================================================
-        // 3. Three.js 3D 뷰어 로직
+        // 3. Three.js 3D 뷰어 로직 (개선)
         // =================================================================
         import * as THREE from 'three';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -463,21 +461,21 @@
 
         const threeJsContainer = document.getElementById('threejs-container');
 
-        let intersectedObject = null;
-        let originalScale = new THREE.Vector3();
+        let currentIntersected = null; // 현재 마우스 오버된 모델
         let rotationSpeed = 0.005;
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         
         // modelsToLoad는 위에서 정의됨 (재사용)
 
-        const FIXED_POSITION_Y = 0.0; // ✨ 수정 완료: 3D 모델의 Y 좌표를 0.0으로 조정 (원래 -4.0)
+        const FIXED_POSITION_Y = 0.0;
         const FIXED_POSITION_Z = 0.0;
         const MODEL_SPACING_X = 3.0;
         const HOVER_SCALE_FACTOR = 1.2;
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xffffff);
+        // ✅ 개선 5: 3D 모델 가시성을 위해 배경색을 WhiteSmoke로 변경
+        scene.background = new THREE.Color(0xf5f5f5); 
 
         const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
         camera.position.set(0, 0, 15);
@@ -495,7 +493,7 @@
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.target.set(0, FIXED_POSITION_Y, 0); 
+        controls.target.set(0, FIXED_POSITION_Y, 0);	
         controls.enablePan = false;
         controls.enableRotate = true;
         controls.maxDistance = 20;
@@ -534,8 +532,6 @@
         renderer.domElement.addEventListener('mouseleave', onThreeJsMouseLeave, false);
 
 
-        let currentIntersected = null;
-
         function onThreeJsMouseMove(event) {
             const rect = renderer.domElement.getBoundingClientRect();
             mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -544,38 +540,31 @@
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(scene.children, true);
 
+            let newIntersected = null;
+
             if (intersects.length > 0) {
                 let target = intersects[0].object;
                 while (target.parent && target.parent !== scene) {
                     target = target.parent;
                 }
 
-                if (target.parent === scene && target !== currentIntersected) {
-                    if (currentIntersected) {
-                        currentIntersected.scale.copy(currentIntersected.userData.originalScale);
-                        if (currentIntersected.userData.autoRotateInterval) {
-                            clearInterval(currentIntersected.userData.autoRotateInterval);
-                            currentIntersected.userData.autoRotateInterval = null;
-                        }
-                    }
-
-                    currentIntersected = target;
-                    currentIntersected.scale.multiplyScalar(HOVER_SCALE_FACTOR);
-
-                    if (!currentIntersected.userData.autoRotateInterval) {
-                        currentIntersected.userData.autoRotateInterval = setInterval(() => {
-                            currentIntersected.rotation.y += rotationSpeed * 5;
-                        }, 1000 / 60);
-                    }
+                if (target.parent === scene) {
+                    newIntersected = target;
                 }
-            } else {
+            }
+            
+            // 마우스 오버 상태 변경 감지
+            if (currentIntersected !== newIntersected) {
+                // 이전 모델 크기 복원
                 if (currentIntersected) {
                     currentIntersected.scale.copy(currentIntersected.userData.originalScale);
-                    if (currentIntersected.userData.autoRotateInterval) {
-                        clearInterval(currentIntersected.userData.autoRotateInterval);
-                        currentIntersected.userData.autoRotateInterval = null;
-                    }
-                    currentIntersected = null;
+                }
+
+                // 새 모델 크기 확대
+                currentIntersected = newIntersected;
+
+                if (currentIntersected) {
+                    currentIntersected.scale.multiplyScalar(HOVER_SCALE_FACTOR);
                 }
             }
         }
@@ -583,10 +572,6 @@
         function onThreeJsMouseLeave() {
             if (currentIntersected) {
                 currentIntersected.scale.copy(currentIntersected.userData.originalScale);
-                if (currentIntersected.userData.autoRotateInterval) {
-                    clearInterval(currentIntersected.userData.autoRotateInterval);
-                    currentIntersected.userData.autoRotateInterval = null;
-                }
                 currentIntersected = null;
             }
         }
@@ -601,6 +586,19 @@
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
+
+            // ✅ 개선 6: 마우스 오버된 모델만 회전시키는 로직을 animate 함수 내에서 처리하여 성능 개선
+            if (currentIntersected) {
+                currentIntersected.rotation.y += rotationSpeed * 5;
+            } else {
+                // 마우스 오버되지 않은 모든 모델은 느리게 자동 회전 (선택 사항)
+                scene.children.forEach(object => {
+                    if (object.isGroup || object.isMesh) { // 로드된 3D 모델(Group)만 처리
+                        object.rotation.y += rotationSpeed;
+                    }
+                });
+            }
+
             renderer.render(scene, camera);
         }
 
