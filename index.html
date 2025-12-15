@@ -198,13 +198,13 @@
 
     <script type="module">
         // =================================================================
-        // 0. 로고 클릭 시 이동 함수 (새로 추가됨)
+        // 0. 로고 클릭 시 이동 함수
         // =================================================================
         function goToHomePage() {
             const targetUrl = 'https://mingyunbong-netizen.github.io/home/#';
             window.location.href = targetUrl;
         }
-        window.goToHomePage = goToHomePage; // 전역 스코프에 등록하여 onclick에서 호출 가능하게 함
+        window.goToHomePage = goToHomePage;
 
 
         // =================================================================
@@ -401,7 +401,7 @@
                 // 인식이 멈출 때, 임시 텍스트를 제거하고 누적 기록만 표시
                 speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`;	
                 
-                // ✅ 수정 3: 음성 인식이 꺼지면 즉시 다시 시작하도록 강화 (비디오 재생 중에도 마이크 유지)
+                // 음성 인식이 꺼지면 즉시 다시 시작하도록 강화
                 if (isMediaReady) {	
                     try {
                         speechRecognition.start();
@@ -426,11 +426,14 @@
         // 웹캠 시작 함수: 마이크 접근을 포함하도록 유지
         async function startWebcam() {
             try {
-                // 웹캠(video: true) 및 마이크(audio: true) 권한 요청
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });	
+                // 🛑 ✅ 최종 수정: 음성 인식의 피드백 루프를 막기 위해
+                // MediaDevices API를 통한 오디오 접근을 완전히 제거합니다 (audio: false).
+                // SpeechRecognition은 자체적으로 마이크 권한을 사용합니다.
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: **false** });	
                 
-                // ✅ 수정 2: 오디오 에코 방지를 위해 비디오 트랙만 추출하여 연결
+                // 1. 비디오 트랙만 추출
                 const videoTrack = stream.getVideoTracks()[0];
+                // 2. 비디오 트랙만 포함하는 새 MediaStream 생성
                 const videoOnlyStream = new MediaStream([videoTrack]);
                 
                 loadingMessage.style.display = 'none';
@@ -439,14 +442,15 @@
                 
                 isMediaReady = true;
 
-                voiceStatusDisplay.innerText = '✅ 웹캠 및 마이크 접근 완료. 음성 인식을 시작합니다.';
+                // 메시지 변경: 마이크 접근은 SpeechRecognition이 처리합니다.
+                voiceStatusDisplay.innerText = '✅ 웹캠 접근 완료. 이제 마이크 권한을 요청합니다.';
 
-                // 접근 성공 후 음성 인식 시작 (마이크 소리는 SpeechRecognition이 사용)
+                // 음성 인식 시작 
                 startSpeechRecognition();	
 
             } catch (err) {
-                console.error("웹캠/마이크 접근 권한 거부 또는 오류 발생:", err);
-                loadingMessage.innerText = "웹캠 또는 마이크 접근 권한이 거부되었습니다. 모두 허용해 주세요.";
+                console.error("웹캠 접근 권한 거부 또는 오류 발생:", err);
+                loadingMessage.innerText = "웹캠 접근 권한이 거부되었습니다. 모두 허용해 주세요.";
                 loadingMessage.style.color = '#ff6b6b';
                 voiceStatusDisplay.innerText = '❌ 웹캠/마이크 접근 권한이 필요합니다.';
             }
