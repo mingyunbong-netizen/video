@@ -496,8 +496,8 @@
         const MODEL_SPACING_X = 5.0;  
         const HOVER_SCALE_FACTOR = 1.2;
         
-        // 💡 수정 지점: CAMERA_POSITION_Y를 줄여 모델을 화면상에서 위로 올립니다. (5.0 -> 2.0)
-        const CAMERA_POSITION_Y = 2.0; 
+        // 💡 수정 지점: CAMERA_POSITION_Y를 4.0으로 변경하여 모델을 훨씬 더 아래로 이동
+        const CAMERA_POSITION_Y = 4.0; 
         
         const scene = new THREE.Scene();
         // 3D 모델 가시성을 위해 배경색을 WhiteSmoke로 변경
@@ -506,7 +506,7 @@
         // 카메라 생성 시 컨테이너의 현재 크기를 사용
         const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
         // 💡 수정 지점: 새로운 CAMERA_POSITION_Y 적용
-        camera.position.set(0, CAMERA_POSITION_Y, 15); // 카메라 위치를 위로 이동 (모델은 상대적으로 위로 올라옴)
+        camera.position.set(0, CAMERA_POSITION_Y, 15); // 카메라 위치를 위로 이동 (모델은 상대적으로 아래로 내려옴)
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
