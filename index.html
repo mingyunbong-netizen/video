@@ -490,10 +490,9 @@
         
         // modelsToLoad는 위에서 정의됨 (재사용)
 
-        // ✅ 수정: Y축을 -2.0으로 더 낮춰 화면 중앙보다 아래에 위치
-        const FIXED_POSITION_Y = -10.0; 
+        // ✅ FIXED_POSITION_Y를 -2.0으로 설정하여 모델 높이 조정
+        const FIXED_POSITION_Y = -2.0; 
         const FIXED_POSITION_Z = 0.0;
-        // 모델 간 X축 간격 유지
         const MODEL_SPACING_X = 5.0;  
         const HOVER_SCALE_FACTOR = 1.2;
 
@@ -518,6 +517,7 @@
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
+        // ✅ controls.target을 모델의 Y 위치와 동기화하여 카메라 조작 중심을 맞춤
         controls.target.set(0, FIXED_POSITION_Y, 0);	
         controls.enablePan = false;
         controls.enableRotate = true;
@@ -535,6 +535,7 @@
                     const model = gltf.scene;
 
                     model.position.x = startX + (index * MODEL_SPACING_X);
+                    // ✅ model.position.y를 FIXED_POSITION_Y에 맞춤
                     model.position.y = FIXED_POSITION_Y;
                     model.position.z = FIXED_POSITION_Z;
 
