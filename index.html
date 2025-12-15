@@ -1,617 +1,616 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>영상 비교 및 3D 모델 뷰어 (음성 인식 기록 박스)</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            overflow-x: hidden;
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영상 비교 및 3D 모델 뷰어 (음성 인식 기록 박스)</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow-x: hidden;
+        }
 
-        /* ------------------------------------------- */
-        /* 수정된 로고 스타일 */
-        /* ------------------------------------------- */
-        #homepage-logo {
-            cursor: pointer;
-            position: fixed;
-            top: 40px;
-            /* **수정된 부분: 왼쪽 여백 공간의 중앙에 위치** */
-            left: calc((100vw - 1000px) / 4); 
-            font-size: 30px;
-            font-weight: bold;
-            font-family: 'BookkGothic', sans-serif;
-            color: black;
-            z-index: 100; 
-            transition: font-size 0.3s ease;
-        }
-        #homepage-logo:hover {
-            font-size: 32px;
-        }
-        /* ------------------------------------------- */
+        /* ------------------------------------------- */
+        /* 추가된 로고 스타일 */
+        /* ------------------------------------------- */
+        #homepage-logo {
+            cursor: pointer;
+            position: fixed;
+            top: 40px;
+            left: 20px;
+            font-size: 30px;
+            font-weight: bold;
+            font-family: 'BookkGothic', sans-serif;
+            color: black;
+            z-index: 100; /* 다른 요소 위에 표시되도록 최상위로 설정 */
+            transition: font-size 0.3s ease;
+        }
+        #homepage-logo:hover {
+            font-size: 32px;
+        }
+        /* ------------------------------------------- */
 
-        .top-comparison-section {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 30px 0 10px 0;
-            box-sizing: border-box;
-            background-color: #f7f7f7;
-        }
-        
-        #voice-status-display {
-            width: 1000px;
-            padding: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: bold;
-            color: #ffffff;
-            background-color: #000000;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
+        .top-comparison-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 0 10px 0;
+            box-sizing: border-box;
+            background-color: #f7f7f7;
+        }
+        
+        #voice-status-display {
+            width: 1000px;
+            padding: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #000000;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
 
-        .comparison-container {
-            display: flex;
-            width: 1000px;
-            height: 500px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
+        .comparison-container {
+            display: flex;
+            width: 1000px;
+            height: 500px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
 
-        .left-panel {
-            width: 500px;
-            height: 500px;
-            flex-shrink: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            background-color: #f0f0f0;
-            position: relative;
-            transition: transform 0.2s ease-in-out;
-        }
+        .left-panel {
+            width: 500px;
+            height: 500px;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            position: relative;
+            transition: transform 0.2s ease-in-out;
+        }
 
-        .left-panel:hover {
-            transform: scale(1.02);
-            cursor: pointer;
-        }
+        .left-panel:hover {
+            transform: scale(1.02);
+            cursor: pointer;
+        }
 
-        .right-panel {
-            width: 500px;
-            height: 500px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box;
-            background-color: #333333;
-            position: relative;
-        }
+        .right-panel {
+            width: 500px;
+            height: 500px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            background-color: #333333;
+            position: relative;
+        }
 
-        #my-video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        #my-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-        #webcam-feed {
-            width: 500px;
-            height: 500px;
-            background-color: #000;
-            object-fit: cover;
-            border: none;
-            transform: scaleX(-1);
-        }
+        #webcam-feed {
+            width: 500px;
+            height: 500px;
+            background-color: #000;
+            object-fit: cover;
+            border: none;
+            transform: scaleX(-1);
+        }
 
-        .loading-text {
-            color: white;
-            font-size: 1.2em;
-            text-align: center;
-            position: absolute;
-            width: 500px;
-        }
-        
-        #speech-command-overlay {
-            position: absolute;
-            top: 10px;	
-            right: -300px;	
-            width: 250px;	
-            height: 480px;	
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.65);
-            color: white;
-            font-size: 0.9em;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            box-sizing: border-box;
-            overflow-y: auto;
-            text-align: center;
-            white-space: pre-wrap;
-            z-index: 10;
-            display: none;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        #speech-command-overlay::-webkit-scrollbar {
-            display: none;
-        }
-        
-        #interim-text {
-            color: #FFFF00;	
-            font-style: italic;
-        }
+        .loading-text {
+            color: white;
+            font-size: 1.2em;
+            text-align: center;
+            position: absolute;
+            width: 500px;
+        }
+        
+        #speech-command-overlay {
+            position: absolute;
+            top: 10px;	
+            right: -300px;	
+            width: 250px;	
+            height: 480px;	
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.65);
+            color: white;
+            font-size: 0.9em;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+            overflow-y: auto;
+            text-align: center;
+            white-space: pre-wrap;
+            z-index: 10;
+            display: none;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        #speech-command-overlay::-webkit-scrollbar {
+            display: none;
+        }
+        
+        #interim-text {
+            color: #FFFF00;	
+            font-style: italic;
+        }
 
 
-        #threejs-container {
-            width: 100vw;
-            height: 70vh;
-            overflow: hidden;
-            cursor: grab;
-        }
+        #threejs-container {
+            width: 100vw;
+            height: 70vh;
+            overflow: hidden;
+            cursor: grab;
+        }
 
-        #threejs-container canvas {
-            display: block;
-        }
-    </style>
+        #threejs-container canvas {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    
-    <div id="homepage-logo" onclick="goToHomePage()">
-        서사, 위기 속에서
-    </div>
-    <div class="top-comparison-section">
-        <div id="voice-status-display">마이크 및 웹캠 접근 권한을 허용해 주세요.</div>
-
-        <div class="comparison-container">
-            <div class="left-panel" id="left-video-panel">
-                <video id="my-video" autoplay playsinline>
-                    <source id="video-source" src="base.mp4" type="video/mp4">
-                    죄송합니다. 귀하의 브라우저는 비디오 태그를 지원하지 않습니다.
-                </video>
-            </div>
-
-            <div class="right-panel">
-                <div id="loading-message" class="loading-text">
-                    웹캠 및 마이크 접근을 요청 중입니다...
-                </div>
-                <video id="webcam-feed" autoplay playsinline muted style="display: none;"></video>
-                
-                <div id="speech-command-overlay"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="threejs-container">
-    </div>
-
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
-
-    <script type="module">
-        // =================================================================
-        // 0. 로고 클릭 시 이동 함수 (새로 추가됨)
-        // =================================================================
-        function goToHomePage() {
-            const targetUrl = 'https://mingyunbong-netizen.github.io/home/#';
-            window.location.href = targetUrl;
-        }
-        window.goToHomePage = goToHomePage; // 전역 스코프에 등록하여 onclick에서 호출 가능하게 함
-
-
-        // =================================================================
-        // 1. DOM 및 비디오 제어 로직
-        // =================================================================
-        const videoElement = document.getElementById('webcam-feed');
-        const loadingMessage = document.getElementById('loading-message');
-        const myVideo = document.getElementById('my-video');
-        const videoSource = document.getElementById('video-source');
-        const leftVideoPanel = document.getElementById('left-video-panel');
-        const voiceStatusDisplay = document.getElementById('voice-status-display');
-        const speechCommandOverlay = document.getElementById('speech-command-overlay');
-
-        const BASE_VIDEO_PATH = "base.mp4";
-
-
-        if (myVideo) {
-            myVideo.loop = true;
-            myVideo.muted = true;
-            myVideo.play().catch(error => {
-                console.log("자동 재생이 차단되었습니다. 페이지를 클릭해 주세요.");
-                document.addEventListener('click', () => {
-                    myVideo.play().catch(e => console.log("재생 실패:", e));
-                }, { once: true });
-            });
-        }
-        
-        myVideo.addEventListener('ended', () => {
-            const currentVideoName = myVideo.currentSrc.substring(myVideo.currentSrc.lastIndexOf('/') + 1);
-            if (currentVideoName !== BASE_VIDEO_PATH) {
-                switchToBaseVideo();
-            }
-        });
-
-        function switchToBaseVideo() {
-            videoSource.src = BASE_VIDEO_PATH;
-            myVideo.load();
-            
-            myVideo.loop = true;
-            myVideo.muted = true;
-            myVideo.play().catch(e => console.error("기본 비디오 재생 실패:", e));
-        }
-
-        leftVideoPanel.addEventListener('click', () => {
-            const currentVideoName = myVideo.currentSrc.substring(myVideo.currentSrc.lastIndexOf('/') + 1);
-            if (currentVideoName === BASE_VIDEO_PATH) {
-                playSpecificVideo('hi.mp4');
-            }
-        });
-
-        function playSpecificVideo(videoPath) {
-            myVideo.loop = false;
-            myVideo.muted = false;
-
-            videoSource.src = videoPath;
-            myVideo.load();
-
-            myVideo.play().catch(e => {
-                console.error(`비디오 재생 실패 (${videoPath}):`, e);
-                myVideo.muted = true;
-                myVideo.play().catch(e2 => console.error("음소거 재생도 실패:", e2));
-            });
-        }
-        
-        // =================================================================
-        // 2. 음성 인식 및 통합 로직 (누적 기록 개선)
-        // =================================================================
-
-        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-        const speechRecognition = window.SpeechRecognition ? new SpeechRecognition() : null;
-        let isListening = false;
-        let isMediaReady = false;
-        let modelKeywordMap = {};
-        
-        // 누적된 음성 기록을 저장하는 변수
-        let accumulatedTranscript = '대화 메모장\n';	
-
-        // 모델 정보 정의
-        const modelsToLoad = [
-            { name: 'shoes.glb', scale: 10, video: 'shoes.mp4' },
-            { name: 'bag.glb', scale: 7, video: 'bag.mp4' },
-            { name: 'ball.glb', scale: 5, video: 'Stretching.mp4' },
-            { name: 'book.glb', scale: 10, video: 'book.mp4' },
-            { name: 'close.glb', scale: 5, video: 'clothes.mp4' },
-            { name: 'glasses.glb', scale: 20, video: 'glasses.mp4' },
-            { name: 'guard.glb', scale: 10, video: 'brace.mp4' },
-            { name: 'persimmon.glb', scale: 20, video: 'food.mp4' },
-        ];
-
-        // 음성 인식 키워드 맵 생성
-        modelsToLoad.forEach(model => {
-            let keyword;
-            switch (model.name.split('.')[0]) {	
-                case 'shoes': keyword = '신발'; break;
-                case 'bag': keyword = '가방'; break;
-                case 'ball': keyword = '공'; break;
-                case 'book': keyword = '책'; break;
-                case 'close': keyword = '옷'; break;
-                case 'glasses': keyword = '안경'; break;
-                case 'guard': keyword = '보호대'; break;
-                case 'persimmon': keyword = '감'; break;
-                default: keyword = null;
-            }
-            if (keyword) {
-                modelKeywordMap[keyword] = model.video;
-            }
-        });
-        modelKeywordMap['기본'] = BASE_VIDEO_PATH;	
-
-
-        function startSpeechRecognition() {
-            if (!speechRecognition) {
-                voiceStatusDisplay.innerText = "❌ 음성 인식이 지원되지 않는 브라우저입니다.";
-                return;
-            }
-
-            speechRecognition.continuous = true;
-            speechRecognition.interimResults = true;	
-            speechRecognition.lang = 'ko-KR';
-
-            speechRecognition.onstart = function() {
-                isListening = true;
-                voiceStatusDisplay.innerText = ' 대화를 걸어주세요!. "신발", "가방", "안경" 등을 말해보세요.';
-                speechCommandOverlay.style.display = 'block';
-                // HTML로 누적 기록 초기 표시
-                speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div><span id="interim-text">...말씀하세요.</span>`;	
-            };
-
-            speechRecognition.onresult = function(event) {
-                let interimTranscript = '';
-                let finalTranscript = '';
-                let latestFinalTranscript = '';
-
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscript += transcript;
-                        latestFinalTranscript = transcript;
-                    } else {
-                        interimTranscript += transcript;
-                    }
-                }
-                
-                // 최종 텍스트를 누적 기록 변수에 추가 (줄바꿈 포함)
-                if (finalTranscript) {
-                    accumulatedTranscript += finalTranscript + '\n';
-                }
-
-                // 화면에 '누적된 최종 기록'과 '현재 말하고 있는 임시 텍스트'를 HTML 태그를 사용하여 분리하여 표시
-                speechCommandOverlay.innerHTML =	
-                    `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>` +	
-                    `<span id="interim-text">${interimTranscript}</span>`;
-
-                // 스크롤이 생긴 경우 가장 아래로 이동
-                speechCommandOverlay.scrollTop = speechCommandOverlay.scrollHeight;
-
-                // --- 비디오 명령 처리 로직 ---
-                if (latestFinalTranscript) {
-                    const transcript = latestFinalTranscript.trim();
-                    let matchedVideoPath = null;
-                    for (const keyword in modelKeywordMap) {
-                        if (transcript.includes(keyword)) {
-                            matchedVideoPath = modelKeywordMap[keyword];
-                            break;
-                        }
-                    }
-
-                    if (matchedVideoPath) {
-                        voiceStatusDisplay.innerText = `주제 확인: "${transcript}" -> 대화 재생 중.`;
-                        
-                        if (matchedVideoPath === BASE_VIDEO_PATH) {
-                            switchToBaseVideo();
-                        } else {
-                            playSpecificVideo(matchedVideoPath);
-                        }
-                    } else {
-                        voiceStatusDisplay.innerText = `주제를 찾지 못했어요: "${transcript}" -> 아래 요소들을 말해주세요.`;
-                    }
-                }
-            };
-
-            speechRecognition.onerror = function(event) {
-                voiceStatusDisplay.innerText = `음성 인식 오류 발생: ${event.error}`;
-                // 오류 발생 시 누적 기록에 오류 메시지 추가 및 업데이트
-                accumulatedTranscript += `[오류: ${event.error}]\n`;
-                speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`;
-                speechCommandOverlay.scrollTop = speechCommandOverlay.scrollHeight;
-                isListening = false;
-            };
-
-            speechRecognition.onend = function() {
-                isListening = false;
-                // 인식이 멈출 때, 임시 텍스트를 제거하고 누적 기록만 표시
-                speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`;	
-                
-                // ✅ 수정 3: 음성 인식이 꺼지면 즉시 다시 시작하도록 강화 (비디오 재생 중에도 마이크 유지)
-                if (isMediaReady) {	
-                    try {
-                        speechRecognition.start();
-                    } catch (e) {
-                        // 연속 실행 오류 시, 약간의 딜레이 후 재시도
-                        setTimeout(() => {
-                            if (isMediaReady) {
-                                speechRecognition.start();
-                            }
-                        }, 500); 
-                    }
-                }
-            };
-
-            try {
-                speechRecognition.start();
-            } catch (e) {
-                // 이미 실행 중일 때 발생하는 오류 무시
-            }
-        }
-        
-        // 웹캠 시작 함수: 마이크 접근을 포함하도록 유지
-        async function startWebcam() {
-            try {
-                // 웹캠(video: true) 및 마이크(audio: true) 권한 요청
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });	
-                
-                // ✅ 수정 2: 오디오 에코 방지를 위해 비디오 트랙만 추출하여 연결
-                const videoTrack = stream.getVideoTracks()[0];
-                const videoOnlyStream = new MediaStream([videoTrack]);
-                
-                loadingMessage.style.display = 'none';
-                videoElement.style.display = 'block';
-                videoElement.srcObject = videoOnlyStream; // 비디오 전용 스트림 할당
-                
-                isMediaReady = true;
-
-                voiceStatusDisplay.innerText = '✅ 웹캠 및 마이크 접근 완료. 음성 인식을 시작합니다.';
-
-                // 접근 성공 후 음성 인식 시작 (마이크 소리는 SpeechRecognition이 사용)
-                startSpeechRecognition();	
-
-            } catch (err) {
-                console.error("웹캠/마이크 접근 권한 거부 또는 오류 발생:", err);
-                loadingMessage.innerText = "웹캠 또는 마이크 접근 권한이 거부되었습니다. 모두 허용해 주세요.";
-                loadingMessage.style.color = '#ff6b6b';
-                voiceStatusDisplay.innerText = '❌ 웹캠/마이크 접근 권한이 필요합니다.';
-            }
-        }
-
-        window.onload = startWebcam;	
-
-        // =================================================================
-        // 3. Three.js 3D 뷰어 로직
-        // =================================================================
-        import * as THREE from 'three';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-        const threeJsContainer = document.getElementById('threejs-container');
-
-        let intersectedObject = null;
-        let originalScale = new THREE.Vector3();
-        let rotationSpeed = 0.005;
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        
-        // modelsToLoad는 위에서 정의됨 (재사용)
-
-        const FIXED_POSITION_Y = 0.0; // ✨ 수정 완료: 3D 모델의 Y 좌표를 0.0으로 조정 (원래 -4.0)
-        const FIXED_POSITION_Z = 0.0;
-        const MODEL_SPACING_X = 3.0;
-        const HOVER_SCALE_FACTOR = 1.2;
-
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xffffff);
-
-        const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
-        camera.position.set(0, 0, 15);
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
-        threeJsContainer.appendChild(renderer.domElement);
-
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-        scene.add(ambientLight);
-
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        directionalLight.position.set(5, 10, 7).normalize();
-        scene.add(directionalLight);
-
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.target.set(0, FIXED_POSITION_Y, 0); 
-        controls.enablePan = false;
-        controls.enableRotate = true;
-        controls.maxDistance = 20;
-        controls.minDistance = 5;
-
-        const loader = new GLTFLoader();
-        const modelCount = modelsToLoad.length;
-        const startX = -((modelCount - 1) * MODEL_SPACING_X) / 2;
-
-        modelsToLoad.forEach((modelInfo, index) => {
-            loader.load(
-                modelInfo.name,
-                function (gltf) {
-                    const model = gltf.scene;
-
-                    model.position.x = startX + (index * MODEL_SPACING_X);
-                    model.position.y = FIXED_POSITION_Y;
-                    model.position.z = FIXED_POSITION_Z;
-
-                    model.scale.set(modelInfo.scale, modelInfo.scale, modelInfo.scale);
-                    model.userData.modelName = modelInfo.name;
-                    model.userData.modelVideo = modelInfo.video;
-                    model.userData.originalScale = model.scale.clone();
-
-                    scene.add(model);
-                },
-                undefined,
-                function (error) {
-                    console.error(`모델 로드 중 에러 발생: ${modelInfo.name}`, error);
-                }
-            );
-        });
-
-        renderer.domElement.addEventListener('mousemove', onThreeJsMouseMove, false);
-        renderer.domElement.addEventListener('click', onThreeJsClick, false);
-        renderer.domElement.addEventListener('mouseleave', onThreeJsMouseLeave, false);
-
-
-        let currentIntersected = null;
-
-        function onThreeJsMouseMove(event) {
-            const rect = renderer.domElement.getBoundingClientRect();
-            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(scene.children, true);
-
-            if (intersects.length > 0) {
-                let target = intersects[0].object;
-                while (target.parent && target.parent !== scene) {
-                    target = target.parent;
-                }
-
-                if (target.parent === scene && target !== currentIntersected) {
-                    if (currentIntersected) {
-                        currentIntersected.scale.copy(currentIntersected.userData.originalScale);
-                        if (currentIntersected.userData.autoRotateInterval) {
-                            clearInterval(currentIntersected.userData.autoRotateInterval);
-                            currentIntersected.userData.autoRotateInterval = null;
-                        }
-                    }
-
-                    currentIntersected = target;
-                    currentIntersected.scale.multiplyScalar(HOVER_SCALE_FACTOR);
-
-                    if (!currentIntersected.userData.autoRotateInterval) {
-                        currentIntersected.userData.autoRotateInterval = setInterval(() => {
-                            currentIntersected.rotation.y += rotationSpeed * 5;
-                        }, 1000 / 60);
-                    }
-                }
-            } else {
-                if (currentIntersected) {
-                    currentIntersected.scale.copy(currentIntersected.userData.originalScale);
-                    if (currentIntersected.userData.autoRotateInterval) {
-                        clearInterval(currentIntersected.userData.autoRotateInterval);
-                        currentIntersected.userData.autoRotateInterval = null;
-                    }
-                    currentIntersected = null;
-                }
-            }
-        }
-
-        function onThreeJsMouseLeave() {
-            if (currentIntersected) {
-                currentIntersected.scale.copy(currentIntersected.userData.originalScale);
-                if (currentIntersected.userData.autoRotateInterval) {
-                    clearInterval(currentIntersected.userData.autoRotateInterval);
-                    currentIntersected.userData.autoRotateInterval = null;
-                }
-                currentIntersected = null;
-            }
-        }
-
-        function onThreeJsClick(event) {
-            if (currentIntersected && currentIntersected.userData.modelVideo) {
-                playSpecificVideo(currentIntersected.userData.modelVideo);
-            }
-        }
-
-
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-        }
-
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = threeJsContainer.clientWidth / threeJsContainer.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
-        });
-    </script>
+    
+    <div id="homepage-logo" onclick="goToHomePage()">
+        서사, 위기 속에서
+    </div>
+    <div class="top-comparison-section">
+        <div id="voice-status-display">마이크 및 웹캠 접근 권한을 허용해 주세요.</div>
+
+        <div class="comparison-container">
+            <div class="left-panel" id="left-video-panel">
+                <video id="my-video" autoplay playsinline>
+                    <source id="video-source" src="base.mp4" type="video/mp4">
+                    죄송합니다. 귀하의 브라우저는 비디오 태그를 지원하지 않습니다.
+                </video>
+            </div>
+
+            <div class="right-panel">
+                <div id="loading-message" class="loading-text">
+                    웹캠 및 마이크 접근을 요청 중입니다...
+                </div>
+                <video id="webcam-feed" autoplay playsinline muted style="display: none;"></video>
+                
+                <div id="speech-command-overlay"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="threejs-container">
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // =================================================================
+        // 0. 로고 클릭 시 이동 함수 (새로 추가됨)
+        // =================================================================
+        function goToHomePage() {
+            const targetUrl = 'https://mingyunbong-netizen.github.io/home/#';
+            window.location.href = targetUrl;
+        }
+        window.goToHomePage = goToHomePage; // 전역 스코프에 등록하여 onclick에서 호출 가능하게 함
+
+
+        // =================================================================
+        // 1. DOM 및 비디오 제어 로직
+        // =================================================================
+        const videoElement = document.getElementById('webcam-feed');
+        const loadingMessage = document.getElementById('loading-message');
+        const myVideo = document.getElementById('my-video');
+        const videoSource = document.getElementById('video-source');
+        const leftVideoPanel = document.getElementById('left-video-panel');
+        const voiceStatusDisplay = document.getElementById('voice-status-display');
+        const speechCommandOverlay = document.getElementById('speech-command-overlay');
+
+        const BASE_VIDEO_PATH = "base.mp4";
+
+
+        if (myVideo) {
+            myVideo.loop = true;
+            myVideo.muted = true;
+            myVideo.play().catch(error => {
+                console.log("자동 재생이 차단되었습니다. 페이지를 클릭해 주세요.");
+                document.addEventListener('click', () => {
+                    myVideo.play().catch(e => console.log("재생 실패:", e));
+                }, { once: true });
+            });
+        }
+        
+        myVideo.addEventListener('ended', () => {
+            const currentVideoName = myVideo.currentSrc.substring(myVideo.currentSrc.lastIndexOf('/') + 1);
+            if (currentVideoName !== BASE_VIDEO_PATH) {
+                switchToBaseVideo();
+            }
+        });
+
+        function switchToBaseVideo() {
+            videoSource.src = BASE_VIDEO_PATH;
+            myVideo.load();
+            
+            myVideo.loop = true;
+            myVideo.muted = true;
+            myVideo.play().catch(e => console.error("기본 비디오 재생 실패:", e));
+        }
+
+        leftVideoPanel.addEventListener('click', () => {
+            const currentVideoName = myVideo.currentSrc.substring(myVideo.currentSrc.lastIndexOf('/') + 1);
+            if (currentVideoName === BASE_VIDEO_PATH) {
+                playSpecificVideo('hi.mp4');
+            }
+        });
+
+        function playSpecificVideo(videoPath) {
+            myVideo.loop = false;
+            myVideo.muted = false;
+
+            videoSource.src = videoPath;
+            myVideo.load();
+
+            myVideo.play().catch(e => {
+                console.error(`비디오 재생 실패 (${videoPath}):`, e);
+                myVideo.muted = true;
+                myVideo.play().catch(e2 => console.error("음소거 재생도 실패:", e2));
+            });
+        }
+        
+        // =================================================================
+        // 2. 음성 인식 및 통합 로직 (누적 기록 개선)
+        // =================================================================
+
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        const speechRecognition = window.SpeechRecognition ? new SpeechRecognition() : null;
+        let isListening = false;
+        let isMediaReady = false;
+        let modelKeywordMap = {};
+        
+        // 누적된 음성 기록을 저장하는 변수
+        let accumulatedTranscript = '대화 메모장\n';	
+
+        // 모델 정보 정의
+        const modelsToLoad = [
+            { name: 'shoes.glb', scale: 10, video: 'shoes.mp4' },
+            { name: 'bag.glb', scale: 7, video: 'bag.mp4' },
+            { name: 'ball.glb', scale: 5, video: 'Stretching.mp4' },
+            { name: 'book.glb', scale: 10, video: 'book.mp4' },
+            { name: 'close.glb', scale: 5, video: 'clothes.mp4' },
+            { name: 'glasses.glb', scale: 20, video: 'glasses.mp4' },
+            { name: 'guard.glb', scale: 10, video: 'brace.mp4' },
+            { name: 'persimmon.glb', scale: 20, video: 'food.mp4' },
+        ];
+
+        // 음성 인식 키워드 맵 생성
+        modelsToLoad.forEach(model => {
+            let keyword;
+            switch (model.name.split('.')[0]) {	
+                case 'shoes': keyword = '신발'; break;
+                case 'bag': keyword = '가방'; break;
+                case 'ball': keyword = '공'; break;
+                case 'book': keyword = '책'; break;
+                case 'close': keyword = '옷'; break;
+                case 'glasses': keyword = '안경'; break;
+                case 'guard': keyword = '보호대'; break;
+                case 'persimmon': keyword = '감'; break;
+                default: keyword = null;
+            }
+            if (keyword) {
+                modelKeywordMap[keyword] = model.video;
+            }
+        });
+        modelKeywordMap['기본'] = BASE_VIDEO_PATH;	
+
+
+        function startSpeechRecognition() {
+            if (!speechRecognition) {
+                voiceStatusDisplay.innerText = "❌ 음성 인식이 지원되지 않는 브라우저입니다.";
+                return;
+            }
+
+            speechRecognition.continuous = true;
+            speechRecognition.interimResults = true;	
+            speechRecognition.lang = 'ko-KR';
+
+            speechRecognition.onstart = function() {
+                isListening = true;
+                voiceStatusDisplay.innerText = ' 대화를 걸어주세요!. "신발", "가방", "안경" 등을 말해보세요.';
+                speechCommandOverlay.style.display = 'block';
+                // HTML로 누적 기록 초기 표시
+                speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div><span id="interim-text">...말씀하세요.</span>`;	
+            };
+
+            speechRecognition.onresult = function(event) {
+                let interimTranscript = '';
+                let finalTranscript = '';
+                let latestFinalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                        latestFinalTranscript = transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+                
+                // 최종 텍스트를 누적 기록 변수에 추가 (줄바꿈 포함)
+                if (finalTranscript) {
+                    accumulatedTranscript += finalTranscript + '\n';
+                }
+
+                // 화면에 '누적된 최종 기록'과 '현재 말하고 있는 임시 텍스트'를 HTML 태그를 사용하여 분리하여 표시
+                speechCommandOverlay.innerHTML =	
+                    `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>` +	
+                    `<span id="interim-text">${interimTranscript}</span>`;
+
+                // 스크롤이 생긴 경우 가장 아래로 이동
+                speechCommandOverlay.scrollTop = speechCommandOverlay.scrollHeight;
+
+                // --- 비디오 명령 처리 로직 ---
+                if (latestFinalTranscript) {
+                    const transcript = latestFinalTranscript.trim();
+                    let matchedVideoPath = null;
+                    for (const keyword in modelKeywordMap) {
+                        if (transcript.includes(keyword)) {
+                            matchedVideoPath = modelKeywordMap[keyword];
+                            break;
+                        }
+                    }
+
+                    if (matchedVideoPath) {
+                        voiceStatusDisplay.innerText = `주제 확인: "${transcript}" -> 대화 재생 중.`;
+                        
+                        if (matchedVideoPath === BASE_VIDEO_PATH) {
+                            switchToBaseVideo();
+                        } else {
+                            playSpecificVideo(matchedVideoPath);
+                        }
+                    } else {
+                        voiceStatusDisplay.innerText = `주제를 찾지 못했어요: "${transcript}" -> 아래 요소들을 말해주세요.`;
+                    }
+                }
+            };
+
+            speechRecognition.onerror = function(event) {
+                voiceStatusDisplay.innerText = `음성 인식 오류 발생: ${event.error}`;
+                // 오류 발생 시 누적 기록에 오류 메시지 추가 및 업데이트
+                accumulatedTranscript += `[오류: ${event.error}]\n`;
+                speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`;
+                speechCommandOverlay.scrollTop = speechCommandOverlay.scrollHeight;
+                isListening = false;
+            };
+
+            speechRecognition.onend = function() {
+                isListening = false;
+                // 인식이 멈출 때, 임시 텍스트를 제거하고 누적 기록만 표시
+                speechCommandOverlay.innerHTML = `<div>${accumulatedTranscript.replace(/\n/g, '<br>')}</div>`;	
+                
+                // ✅ 수정 3: 음성 인식이 꺼지면 즉시 다시 시작하도록 강화 (비디오 재생 중에도 마이크 유지)
+                if (isMediaReady) {	
+                    try {
+                        speechRecognition.start();
+                    } catch (e) {
+                        // 연속 실행 오류 시, 약간의 딜레이 후 재시도
+                        setTimeout(() => {
+                            if (isMediaReady) {
+                                speechRecognition.start();
+                            }
+                        }, 500); 
+                    }
+                }
+            };
+
+            try {
+                speechRecognition.start();
+            } catch (e) {
+                // 이미 실행 중일 때 발생하는 오류 무시
+            }
+        }
+        
+        // 웹캠 시작 함수: 마이크 접근을 포함하도록 유지
+        async function startWebcam() {
+            try {
+                // 웹캠(video: true) 및 마이크(audio: true) 권한 요청
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });	
+                
+                // ✅ 수정 2: 오디오 에코 방지를 위해 비디오 트랙만 추출하여 연결
+                const videoTrack = stream.getVideoTracks()[0];
+                const videoOnlyStream = new MediaStream([videoTrack]);
+                
+                loadingMessage.style.display = 'none';
+                videoElement.style.display = 'block';
+                videoElement.srcObject = videoOnlyStream; // 비디오 전용 스트림 할당
+                
+                isMediaReady = true;
+
+                voiceStatusDisplay.innerText = '✅ 웹캠 및 마이크 접근 완료. 음성 인식을 시작합니다.';
+
+                // 접근 성공 후 음성 인식 시작 (마이크 소리는 SpeechRecognition이 사용)
+                startSpeechRecognition();	
+
+            } catch (err) {
+                console.error("웹캠/마이크 접근 권한 거부 또는 오류 발생:", err);
+                loadingMessage.innerText = "웹캠 또는 마이크 접근 권한이 거부되었습니다. 모두 허용해 주세요.";
+                loadingMessage.style.color = '#ff6b6b';
+                voiceStatusDisplay.innerText = '❌ 웹캠/마이크 접근 권한이 필요합니다.';
+            }
+        }
+
+        window.onload = startWebcam;	
+
+        // =================================================================
+        // 3. Three.js 3D 뷰어 로직
+        // =================================================================
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const threeJsContainer = document.getElementById('threejs-container');
+
+        let intersectedObject = null;
+        let originalScale = new THREE.Vector3();
+        let rotationSpeed = 0.005;
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        // modelsToLoad는 위에서 정의됨 (재사용)
+
+        const FIXED_POSITION_Y = 0.0; // ✨ 수정 완료: 3D 모델의 Y 좌표를 0.0으로 조정 (원래 -4.0)
+        const FIXED_POSITION_Z = 0.0;
+        const MODEL_SPACING_X = 3.0;
+        const HOVER_SCALE_FACTOR = 1.2;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff);
+
+        const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
+        camera.position.set(0, 0, 15);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
+        threeJsContainer.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        directionalLight.position.set(5, 10, 7).normalize();
+        scene.add(directionalLight);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.target.set(0, FIXED_POSITION_Y, 0); 
+        controls.enablePan = false;
+        controls.enableRotate = true;
+        controls.maxDistance = 20;
+        controls.minDistance = 5;
+
+        const loader = new GLTFLoader();
+        const modelCount = modelsToLoad.length;
+        const startX = -((modelCount - 1) * MODEL_SPACING_X) / 2;
+
+        modelsToLoad.forEach((modelInfo, index) => {
+            loader.load(
+                modelInfo.name,
+                function (gltf) {
+                    const model = gltf.scene;
+
+                    model.position.x = startX + (index * MODEL_SPACING_X);
+                    model.position.y = FIXED_POSITION_Y;
+                    model.position.z = FIXED_POSITION_Z;
+
+                    model.scale.set(modelInfo.scale, modelInfo.scale, modelInfo.scale);
+                    model.userData.modelName = modelInfo.name;
+                    model.userData.modelVideo = modelInfo.video;
+                    model.userData.originalScale = model.scale.clone();
+
+                    scene.add(model);
+                },
+                undefined,
+                function (error) {
+                    console.error(`모델 로드 중 에러 발생: ${modelInfo.name}`, error);
+                }
+            );
+        });
+
+        renderer.domElement.addEventListener('mousemove', onThreeJsMouseMove, false);
+        renderer.domElement.addEventListener('click', onThreeJsClick, false);
+        renderer.domElement.addEventListener('mouseleave', onThreeJsMouseLeave, false);
+
+
+        let currentIntersected = null;
+
+        function onThreeJsMouseMove(event) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children, true);
+
+            if (intersects.length > 0) {
+                let target = intersects[0].object;
+                while (target.parent && target.parent !== scene) {
+                    target = target.parent;
+                }
+
+                if (target.parent === scene && target !== currentIntersected) {
+                    if (currentIntersected) {
+                        currentIntersected.scale.copy(currentIntersected.userData.originalScale);
+                        if (currentIntersected.userData.autoRotateInterval) {
+                            clearInterval(currentIntersected.userData.autoRotateInterval);
+                            currentIntersected.userData.autoRotateInterval = null;
+                        }
+                    }
+
+                    currentIntersected = target;
+                    currentIntersected.scale.multiplyScalar(HOVER_SCALE_FACTOR);
+
+                    if (!currentIntersected.userData.autoRotateInterval) {
+                        currentIntersected.userData.autoRotateInterval = setInterval(() => {
+                            currentIntersected.rotation.y += rotationSpeed * 5;
+                        }, 1000 / 60);
+                    }
+                }
+            } else {
+                if (currentIntersected) {
+                    currentIntersected.scale.copy(currentIntersected.userData.originalScale);
+                    if (currentIntersected.userData.autoRotateInterval) {
+                        clearInterval(currentIntersected.userData.autoRotateInterval);
+                        currentIntersected.userData.autoRotateInterval = null;
+                    }
+                    currentIntersected = null;
+                }
+            }
+        }
+
+        function onThreeJsMouseLeave() {
+            if (currentIntersected) {
+                currentIntersected.scale.copy(currentIntersected.userData.originalScale);
+                if (currentIntersected.userData.autoRotateInterval) {
+                    clearInterval(currentIntersected.userData.autoRotateInterval);
+                    currentIntersected.userData.autoRotateInterval = null;
+                }
+                currentIntersected = null;
+            }
+        }
+
+        function onThreeJsClick(event) {
+            if (currentIntersected && currentIntersected.userData.modelVideo) {
+                playSpecificVideo(currentIntersected.userData.modelVideo);
+            }
+        }
+
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = threeJsContainer.clientWidth / threeJsContainer.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
+        });
+    </script>
 </body>
 </html>
