@@ -583,8 +583,8 @@
 
         window.onload = startWebcam;	
 
-        // =================================================================
-        // 3. Three.js 3D 뷰어 로직 (개선)
+       // =================================================================
+        // 3. Three.js 3D 뷰어 로직
         // =================================================================
         import * as THREE from 'three';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -592,24 +592,24 @@
 
         const threeJsContainer = document.getElementById('threejs-container');
 
-        let currentIntersected = null; // 현재 마우스 오버된 모델
+        let intersectedObject = null;
+        let originalScale = new THREE.Vector3();
         let rotationSpeed = 0.005;
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         
         // modelsToLoad는 위에서 정의됨 (재사용)
 
-        // ✅ 모델의 Y축 위치를 아래로 조정하여 화면에 중앙 배치되도록 수정
-        const FIXED_POSITION_Y = -1.5; 
+        const FIXED_POSITION_Y = -4.0;
         const FIXED_POSITION_Z = 0.0;
         const MODEL_SPACING_X = 3.0;
         const HOVER_SCALE_FACTOR = 1.2;
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xf5f5f5); 
+        scene.background = new THREE.Color(0xffffff);
 
-        const camera = new THREE.PerspectiveCamera(40, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
-        camera.position.set(0, 0, 10); 
+        const camera = new THREE.PerspectiveCamera(50, threeJsContainer.clientWidth / threeJsContainer.clientHeight, 0.1, 1000);
+        camera.position.set(0, 0, 15);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
@@ -624,10 +624,7 @@
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        
-        // ✅ OrbitControls의 타겟 위치를 조정된 모델 위치에 맞춤
-        controls.target.set(0, FIXED_POSITION_Y, 0);	
-        
+        controls.target.set(0, FIXED_POSITION_Y, 0);
         controls.enablePan = false;
         controls.enableRotate = true;
         controls.maxDistance = 20;
@@ -644,7 +641,7 @@
                     const model = gltf.scene;
 
                     model.position.x = startX + (index * MODEL_SPACING_X);
-                    model.position.y = FIXED_POSITION_Y; // 조정된 Y 위치 적용
+                    model.position.y = FIXED_POSITION_Y;
                     model.position.z = FIXED_POSITION_Z;
 
                     model.scale.set(modelInfo.scale, modelInfo.scale, modelInfo.scale);
@@ -666,6 +663,8 @@
         renderer.domElement.addEventListener('mouseleave', onThreeJsMouseLeave, false);
 
 
+        let currentIntersected = null;
+
         function onThreeJsMouseMove(event) {
             const rect = renderer.domElement.getBoundingClientRect();
             mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -674,31 +673,38 @@
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(scene.children, true);
 
-            let newIntersected = null;
-
             if (intersects.length > 0) {
                 let target = intersects[0].object;
                 while (target.parent && target.parent !== scene) {
                     target = target.parent;
                 }
 
-                if (target.parent === scene) {
-                    newIntersected = target;
+                if (target.parent === scene && target !== currentIntersected) {
+                    if (currentIntersected) {
+                        currentIntersected.scale.copy(currentIntersected.userData.originalScale);
+                        if (currentIntersected.userData.autoRotateInterval) {
+                            clearInterval(currentIntersected.userData.autoRotateInterval);
+                            currentIntersected.userData.autoRotateInterval = null;
+                        }
+                    }
+
+                    currentIntersected = target;
+                    currentIntersected.scale.multiplyScalar(HOVER_SCALE_FACTOR);
+
+                    if (!currentIntersected.userData.autoRotateInterval) {
+                        currentIntersected.userData.autoRotateInterval = setInterval(() => {
+                            currentIntersected.rotation.y += rotationSpeed * 5;
+                        }, 1000 / 60);
+                    }
                 }
-            }
-            
-            // 마우스 오버 상태 변경 감지
-            if (currentIntersected !== newIntersected) {
-                // 이전 모델 크기 복원
+            } else {
                 if (currentIntersected) {
                     currentIntersected.scale.copy(currentIntersected.userData.originalScale);
-                }
-
-                // 새 모델 크기 확대
-                currentIntersected = newIntersected;
-
-                if (currentIntersected) {
-                    currentIntersected.scale.multiplyScalar(HOVER_SCALE_FACTOR);
+                    if (currentIntersected.userData.autoRotateInterval) {
+                        clearInterval(currentIntersected.userData.autoRotateInterval);
+                        currentIntersected.userData.autoRotateInterval = null;
+                    }
+                    currentIntersected = null;
                 }
             }
         }
@@ -706,6 +712,10 @@
         function onThreeJsMouseLeave() {
             if (currentIntersected) {
                 currentIntersected.scale.copy(currentIntersected.userData.originalScale);
+                if (currentIntersected.userData.autoRotateInterval) {
+                    clearInterval(currentIntersected.userData.autoRotateInterval);
+                    currentIntersected.userData.autoRotateInterval = null;
+                }
                 currentIntersected = null;
             }
         }
@@ -720,29 +730,17 @@
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
-
-            // 마우스 오버된 모델만 빠르게 회전, 나머지는 느리게 자동 회전
-            scene.children.forEach(object => {
-                if (object.isGroup || object.isMesh) {
-                    if (object === currentIntersected) {
-                        object.rotation.y += rotationSpeed * 5;
-                    } else {
-                        object.rotation.y += rotationSpeed;
-                    }
-                }
-            });
-
             renderer.render(scene, camera);
         }
 
         animate();
 
-        // 윈도우 크기 변경 시 3D 뷰어 크기 조정 (Flexbox 높이에 맞춤)
         window.addEventListener('resize', () => {
             camera.aspect = threeJsContainer.clientWidth / threeJsContainer.clientHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(threeJsContainer.clientWidth, threeJsContainer.clientHeight);
         });
+    
     </script>
 </body>
 </html>
